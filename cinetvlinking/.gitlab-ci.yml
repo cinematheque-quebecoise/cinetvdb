@@ -1,0 +1,13 @@
+image: nixos/nix:latest
+
+before_script:
+  - nix-env -i git openssh
+
+stages:
+  - build
+
+compile:
+    stage: build
+    script:
+      - nix-build --no-out-link release.nix
+

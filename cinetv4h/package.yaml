@@ -1,0 +1,38 @@
+name:                cinetv4h
+version:             0.1.0.0
+github:              githubuser/cinetv4h
+license:             GPL-3
+author:              Konstantinos Lambrou-Latreille
+maintainer:          klambroulatreille@cinematheque.qc.ca
+copyright:           2020 Cinémathèque québécoise
+
+extra-source-files:
+- README.md
+
+# Metadata used when publishing your package
+# synopsis:            Short description of your package
+# category:            Web
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on Github at <https://github.com/githubuser/cinetv4h#readme>
+
+dependencies:
+- base >= 4.11 && < 10
+- text
+- persistent
+- persistent-template
+- time
+
+ghc-options:
+- -Wall
+- -Wcompat
+- -Widentities
+- -Wincomplete-record-updates
+- -Wincomplete-uni-patterns
+- -Wpartial-fields
+- -Wredundant-constraints
+
+library:
+  source-dirs: src

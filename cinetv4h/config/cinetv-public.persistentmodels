@@ -1,0 +1,53 @@
+Film_Filmo
+  Id sql=filmId
+  filmoId FilmoId
+
+Filmo
+  Id         sql=filmoId
+  prefixeTitreOriginal Text Maybe
+  titreOriginal Text Maybe
+  anneeSortie Int Maybe
+  anneeDebProd Int Maybe
+  anneeFinProd Int Maybe
+  resume Text Maybe
+  resumeAnglais Text Maybe
+  dateDebProd Text Maybe
+  dateFinProd Text Maybe
+  anneeDebCopyright Int Maybe
+
+Filmo_Realisation
+  filmoId FilmoId
+  nomId NomId
+
+Nom
+  Id sql=nomId
+  nom Text Maybe
+  prenom Text Maybe
+
+Filmo_Pays
+  filmoId FilmoId
+  paysId PaysId
+
+Pays
+  Id sql=paysId
+  terme Text
+
+Filmo_GenresCategories
+  Id sql=FilmoGenresCategoriesID
+  filmoId FilmoId
+  sujetId SujetId
+
+Sujet
+  Id sql=SujetId
+  terme Text
+
+Filmo_Generique
+  Id sql=GeneriqueId
+  fonctionId FonctionId
+  filmoId FilmoId
+  organismeId Text Maybe
+  nomId NomId Maybe
+
+Fonction
+  Id sql=FonctionId
+  terme Text

@@ -1,0 +1,42 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 9c696b3127b40a6c5ce39c29371909bdb8b37a28b53e49d20e1c482e71632937
+
+name:           cinetv4h
+version:        0.1.0.0
+description:    Please see the README on Github at <https://github.com/githubuser/cinetv4h#readme>
+homepage:       https://github.com/githubuser/cinetv4h#readme
+bug-reports:    https://github.com/githubuser/cinetv4h/issues
+author:         Konstantinos Lambrou-Latreille
+maintainer:     klambroulatreille@cinematheque.qc.ca
+copyright:      2020 Cinémathèque québécoise
+license:        GPL-3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+
+source-repository head
+  type: git
+  location: https://github.com/githubuser/cinetv4h
+
+library
+  exposed-modules:
+      Database.CineTv.Model
+      Database.CineTv.Public.Model
+  other-modules:
+      Paths_cinetv4h
+  hs-source-dirs:
+      src
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
+  build-depends:
+      base >=4.11 && <10
+    , persistent
+    , persistent-template
+    , text
+    , time
+  default-language: Haskell2010
