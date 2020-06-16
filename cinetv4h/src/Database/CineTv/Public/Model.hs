@@ -20,6 +20,8 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -35,4 +37,3 @@ import Database.Persist.Quasi (upperCaseSettings)
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"]
   $(persistFileWith upperCaseSettings "config/cinetv-public.persistentmodels")
-

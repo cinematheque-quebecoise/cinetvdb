@@ -18,6 +18,7 @@ Filmo
 Filmo_Realisation
   filmoId FilmoId
   nomId NomId
+  Primary filmoId nomId
 
 Nom
   Id sql=nomId
@@ -45,7 +46,7 @@ Filmo_Generique
   Id sql=GeneriqueId
   fonctionId FonctionId
   filmoId FilmoId
-  organismeId Text Maybe
+  organismeId SujetId Maybe
   nomId NomId Maybe
 
 Fonction

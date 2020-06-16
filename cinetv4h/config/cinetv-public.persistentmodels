@@ -1,35 +1,68 @@
-Film_Filmo
-  Id sql=filmId
-  filmoId FilmoId
+Film
+  Id         sql=FilmId
+  noIdentification Text Maybe
 
 Filmo
-  Id         sql=filmoId
+  Id         sql=FilmoId
   prefixeTitreOriginal Text Maybe
   titreOriginal Text Maybe
   anneeSortie Int Maybe
   anneeDebProd Int Maybe
   anneeFinProd Int Maybe
+  dureeOriginaleMin Int Maybe
+  dureeOriginaleSec Int Maybe
   resume Text Maybe
   resumeAnglais Text Maybe
   dateDebProd Text Maybe
   dateFinProd Text Maybe
   anneeDebCopyright Int Maybe
+  cout Int Maybe
+
+Film_Filmo
+  filmId FilmId
+  filmoId FilmoId
+  Primary filmId filmoId
+
+Filmo_LienWikidata
+  filmoId FilmoId
+  lienWikidata Text Maybe
+  Primary filmoId
+
+Nom
+  Id sql=NomId
+  nom Text Maybe
+  prenom Text Maybe
 
 Filmo_Realisation
   filmoId FilmoId
   nomId NomId
+  Primary filmoId nomId
 
-Nom
-  Id sql=nomId
-  nom Text Maybe
-  prenom Text Maybe
+Nom_LienWikidata
+  nomId NomId
+  lienWikidata Text Maybe
+  Primary nomId
+
+Pays
+  Id sql=PaysId
+  terme Text
 
 Filmo_Pays
   filmoId FilmoId
   paysId PaysId
+  Primary filmoId paysId
 
-Pays
-  Id sql=paysId
+Pays_LienWikidata
+  paysId PaysId
+  lienWikidata Text Maybe
+  Primary paysId
+
+Fonction
+  Id sql=FonctionId
+  terme Text
+
+Sujet
+  Id sql=SujetId
   terme Text
 
 Filmo_GenresCategories
@@ -37,17 +70,56 @@ Filmo_GenresCategories
   filmoId FilmoId
   sujetId SujetId
 
-Sujet
-  Id sql=SujetId
-  terme Text
-
 Filmo_Generique
   Id sql=GeneriqueId
   fonctionId FonctionId
   filmoId FilmoId
-  organismeId Text Maybe
+  organismeId SujetId Maybe
   nomId NomId Maybe
 
-Fonction
-  Id sql=FonctionId
+FilmoResumes
+  Id sql=FilmoResumeID
+  filmoId FilmoId
+  resume Text Maybe
+
+FilmoResumesAnglais
+  Id sql=FilmoResumeAnglaisID
+  filmoId FilmoId
+  resumeAnglais Text Maybe
+
+FilmoDureesOriginales
+  Id sql=DureesOriginalesID
+  filmoId FilmoId
+  minutes Int
+  secondes Int
+
+FilmoDureesEpisodes
+  Id sql=DureesEpisodesID
+  filmoId FilmoId
+  minutes Int
+  secondes Int
+
+Langue
+  Id sql=LangueId
   terme Text
+
+Langue_LienWikidata
+  langueId LangueId
+  lienWikidata Text Maybe
+  Primary langueId
+
+Filmo_Langue
+  filmoId FilmoId
+  langueId LangueId
+  Primary filmoId langueId
+
+TypeTitre
+  Id sql=TypeTitreID
+  terme Text
+
+FilmoTitres
+  Id sql=TitreId
+  filmoId FilmoId
+  typeTitreId TypeTitreId
+  prefixe Text Maybe
+  titre Text
