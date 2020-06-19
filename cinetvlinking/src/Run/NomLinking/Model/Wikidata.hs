@@ -2,6 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE QuasiQuotes #-}
+{-# LANGUAGE FlexibleInstances #-}
 
 module Run.NomLinking.Model.Wikidata (GetWikidataPersonsCount(..), GetWikidataPersonMatch(..), functionWdLinking) where
 

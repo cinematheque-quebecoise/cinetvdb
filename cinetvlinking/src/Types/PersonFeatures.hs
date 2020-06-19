@@ -9,7 +9,7 @@ import Import
 import Data.Csv (namedRecord, DefaultOrdered(..), header, ToNamedRecord(..), FromNamedRecord(..), (.:), (.=))
 
 data PersonFeatures = PersonFeatures
-  { personId :: Text
+  { personId :: Int64
   , firstname :: Text
   , lastname :: Text
   , notes :: Text

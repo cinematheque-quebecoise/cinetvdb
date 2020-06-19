@@ -35,25 +35,27 @@ def main(args):
 
     date = dateMatch.group(0)
 
-    outputdir = f'{path.join(args["-o"], date)}'
+    outputdir = f'{path.join(args["-o"], "cinetv-" + date)}'
 
-    for f in glob(f'{outputdir}/*'):
-        os.remove(f)
-    os.rmdir(outputdir)
+    if os.path.exists(outputdir):
+        for f in glob(f'{outputdir}/*'):
+            os.remove(f)
+        os.rmdir(outputdir)
 
     for f in glob(path.join(args['-d'], '*.xlsx')):
         csvFile = path.join(args['-d'], f.replace('.xlsx', '') + '.csv')
         if args['--reload'] or not os.path.exists(csvFile):
             print(f'Converting file {f} to {csvFile}')
-            Xlsx2csv(f, outputencoding='utf-8').convert(csvFile)
+            Xlsx2csv(f, skip_empty_lines=True, outputencoding='utf-8').convert(csvFile)
 
     csvFilesPattern = path.join(args['-d'], '*.csv')
 
     Path(outputdir).mkdir(parents=True, exist_ok=True)
     cinetvDbPath = path.join(outputdir, f'cinetv-{date}.db')
     print(f'Converting generated CSV files from {csvFilesPattern} to SQLite database at {cinetvDbPath}')
-    if os.system(f'csvs-to-sqlite {csvFilesPattern} {cinetvDbPath}') != 0:
-        return
+    # if os.system(f'csvs-to-sqlite {csvFilesPattern} {cinetvDbPath}') != 0:
+    #     return
+    os.system(f'csvs-to-sqlite {csvFilesPattern} {cinetvDbPath}')
 
     if args["-e"] is None:
         print(f'Migrate CineTV database {cinetvDbPath} to a public subset at {outputdir}')
@@ -65,7 +67,7 @@ def main(args):
         os.system(f'cinetvlinking-exe nom apply -d {cinetvDbPath} -o {args["-e"]}')
 
         csvFilesExtPattern = path.join(args['-e'], '*.csv')
-        cinetvExtDbPath = path.join(outputdir, f'cinetv-{date}-publique.db')
+        cinetvExtDbPath = path.join(outputdir, f'cinetv-{date}-ext.db')
         print(f'Converting generated CSV files from {csvFilesPattern} and {csvFilesExtPattern} to SQLite database at {cinetvExtDbPath}')
         os.system(f'csvs-to-sqlite {csvFilesPattern} {csvFilesExtPattern} {cinetvExtDbPath}')
         print(f'Migrate CineTV database {cinetvExtDbPath} to a public subset at {outputdir}')

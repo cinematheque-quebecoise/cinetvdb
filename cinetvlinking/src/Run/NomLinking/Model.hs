@@ -7,8 +7,6 @@ module Run.NomLinking.Model (GetWikidataPersonsCount(..), GetPersonRoles(..), Ge
 
 import Import hiding ((^.))
 import qualified RIO.Text as Text
-import qualified Data.Text.Read as Text
-import Data.Either.Combinators (rightToMaybe)
 import qualified RIO.List as List
 import Types.PersonFeatures
 import Database.CineTv.Model
@@ -17,7 +15,7 @@ import Data.Pool (Pool)
 import Data.List.Extended (groupByKey)
 
 class (Monad m) => GetPersonRoles m where
-  getPersonRoles :: Text -> m [Text]
+  getPersonRoles :: Int64 -> m [Text]
 
 class (Monad m) => GetUsersByName m where
   getUsersByName :: Text -> Text -> m [Text]
@@ -28,33 +26,40 @@ class (Monad m) => GetWikidataPersonsCount m where
 instance (HasDbPool env) => GetPersonRoles (RIO env) where
   getPersonRoles personId = do
     pool <- fmap getDbPool ask
-    case fmap fst $ rightToMaybe $ Text.decimal personId of
-      Just personIdNum -> do
-        filmoGenericResults <- liftIO $ flip runSqlPersistMPool pool $ do
-          select $
-            distinct $
-            from $ \(filmo, filmoGenerique, nom, fonction) -> do
-            where_ ( nom ^. NomId ==. valkey personIdNum
-                 &&. filmo ^. FilmoId ==. filmoGenerique ^. Filmo_GeneriqueFilmoId
-                 &&. filmoGenerique ^. Filmo_GeneriqueFonctionId ==. fonction ^. FonctionId
-                 &&. filmoGenerique ^. Filmo_GeneriqueNomId ==. just (nom ^. NomId)
-                   )
-            return (fonction)
+    getPersonRoles' pool personId
 
-        filmoRealisationResults <- liftIO $ flip runSqlPersistMPool pool $ do
-          select $
-            distinct $
-            from $ \(filmo, filmoRealisation, nom) -> do
-            where_ ( nom ^. NomId ==. valkey personIdNum
-                 &&. filmo ^. FilmoId ==. filmoRealisation ^. Filmo_RealisationFilmoId
-                 &&. filmoRealisation ^. Filmo_RealisationNomId ==. nom ^. NomId
-                   )
-            return (filmo)
+getPersonRoles' :: (MonadIO m)
+                => Pool SqlBackend
+                -> Int64
+                -> m [Text]
+getPersonRoles' pool personId = do
+  -- case fmap fst $ rightToMaybe $ Text.decimal personId of
+  --   Just personIdNum -> do
+  filmoGenericResults <- liftIO $ flip runSqlPersistMPool pool $ do
+    select $
+      distinct $
+      from $ \(filmo, filmoGenerique, nom, fonction) -> do
+      where_ ( nom ^. NomId ==. valkey personId
+           &&. filmo ^. FilmoId ==. filmoGenerique ^. Filmo_GeneriqueFilmoId
+           &&. filmoGenerique ^. Filmo_GeneriqueFonctionId ==. fonction ^. FonctionId
+           &&. filmoGenerique ^. Filmo_GeneriqueNomId ==. just (nom ^. NomId)
+             )
+      return (fonction)
 
-        return $ fmap toFunctionId filmoGenericResults
-              <> if length filmoRealisationResults > 0 then ["realisation"] else []
+  filmoRealisationResults <- liftIO $ flip runSqlPersistMPool pool $ do
+    select $
+      distinct $
+      from $ \(filmo, filmoRealisation, nom) -> do
+      where_ ( nom ^. NomId ==. valkey personId
+           &&. filmo ^. FilmoId ==. filmoRealisation ^. Filmo_RealisationFilmoId
+           &&. filmoRealisation ^. Filmo_RealisationNomId ==. nom ^. NomId
+             )
+      return (filmo)
 
-      Nothing -> return []
+  return $ fmap toFunctionId filmoGenericResults
+        <> if length filmoRealisationResults > 0 then ["realisation"] else []
+
+    -- Nothing -> return []
 
 toFunctionId :: (Entity Fonction)
              -> Text
@@ -128,7 +133,7 @@ personCreditsToFeatures personCredits =
     toPersonFeatures :: (Entity Filmo, Entity Nom, Entity Fonction)
                      -> PersonFeatures
     toPersonFeatures (_, nomEntity, _) =
-      let nomId = Text.pack $ show $ fromSqlKey $ entityKey nomEntity
+      let nomId = fromSqlKey $ entityKey nomEntity
           firstname = fromMaybe "" $ nomPrenom $ entityVal nomEntity
           lastname = fromMaybe "" $ nomNom $ entityVal nomEntity
        in PersonFeatures nomId

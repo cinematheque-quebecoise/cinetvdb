@@ -8,6 +8,9 @@ import Util (sparqlEndpoint)
 
 import Import
 import Types.FilmoLinked
+import qualified RIO.List as List
+import qualified Data.Text as Text
+import qualified Data.Text.Read as Text
 import qualified Data.Text.Internal.Builder as Text
 import qualified Data.Text.Lazy.Encoding as Text (encodeUtf8)
 import qualified Data.Map as Map
@@ -19,6 +22,7 @@ import Database.SPARQL.Protocol.Client hiding (ask)
 import NeatInterpolation
 import Network.HTTP.Client (responseBody)
 import System.FilePath (joinPath)
+import Data.Either.Combinators (rightToMaybe)
 
 run :: Bool
     -> RIO App ()
@@ -27,13 +31,30 @@ run _ = do
 
   linkedFilmos <- getWikidataLinkedFilmos
 
+  -- Linked filmos ids must be unique
+  let groupedLinkedFilmos = ( List.groupBy (\f1 f2 -> filmoLinkedId f1 == filmoLinkedId f2)
+                            . List.sortOn filmoLinkedId
+                            ) linkedFilmos
+
+  let duplicateLinkedFilmosIds = ( fmap filmoLinkedId
+                                 . catMaybes
+                                 . fmap listToMaybe
+                                 . filter (\xs -> List.length xs > 1)
+                                 ) groupedLinkedFilmos
+  forM_ duplicateLinkedFilmosIds $ \fid -> do
+    logWarn $ display $ "Duplicate Filmo ID: "
+                     <> (Text.pack . show) fid
+                     <> ". Taking the first matched Wikidata link!"
+
+  let uniqLinkedFilmos = (catMaybes . fmap listToMaybe) groupedLinkedFilmos
+
   let myOptions = defaultEncodeOptions { encUseCrLf = False
                                        , encIncludeHeader = True
                                        }
 
   outputdir <- fmap (optionsOutputDir . appOptions) ask
-  let outputFpath = joinPath [outputdir, "FilmoWd.csv"]
-  liftIO $ writeCsvFile outputFpath myOptions linkedFilmos
+  let outputFpath = joinPath [outputdir, "Filmo_LienWikidata.csv"]
+  liftIO $ writeCsvFile outputFpath myOptions uniqLinkedFilmos
 
   logInfo "Completed linking Filmo table to Wikidata!"
 
@@ -58,7 +79,8 @@ getFilmosLinkedFromResults (SelectResult results) =
 getFilmoLinkedFromResult :: Map Text RDFTerm
                          -> Maybe FilmoLinked
 getFilmoLinkedFromResult result = do
-  filmoId <- fmap getRDFTermText $ Map.lookup "filmoId" result
+  filmoTextId <- fmap getRDFTermText $ Map.lookup "filmoId" result
+  filmoId <- fmap fst $ rightToMaybe $ (Text.decimal filmoTextId :: Either String (Int64, Text))
   filmoUri <- fmap getRDFTermText $ Map.lookup "filmo" result
   return $ FilmoLinked filmoId filmoUri
 

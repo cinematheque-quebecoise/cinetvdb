@@ -123,7 +123,7 @@ sampleAnnotatedRecords size records = do
 -- |Select sample of SampleSize elements from streaming records
 sampleUnannotatedRecords :: (Foldable t)
                          => SampleSize
-                         -> Set Text
+                         -> Set Int64
                          -> t PersonFeatures
                          -> RIO App (Vector PersonFeatures)
 sampleUnannotatedRecords size annotatedIds records = do

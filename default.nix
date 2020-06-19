@@ -1,13 +1,13 @@
 { pkgs, ... }:
 
 let
-  pname = "create-cinetv-release";
+  pname = "cinetv2sqlite";
   cinetv-migration = import ./cinetv-migration { inherit pkgs; };
   cinetvlinking = import ./cinetvlinking { inherit pkgs; };
 in
   pkgs.stdenv.mkDerivation rec {
-    name    = "create-cinetv-release-${version}";
-    version = "0.1.0";
+    name    = "cinetv2sqlite-${version}";
+    version = "0.1";
 
     buildInputs = [
       (pkgs.python38.withPackages (pythonPackages: with pythonPackages; [
@@ -23,9 +23,9 @@ in
     unpackPhase = ":";
     installPhase = ''
       mkdir -p $out/bin
-      cp ${./create-cinetv-release.py} $out/bin/create-cinetv-release
-      chmod +x $out/bin/create-cinetv-release
-      wrapProgram $out/bin/create-cinetv-release \
+      cp ${./cinetv2sqlite.py} $out/bin/cinetv2sqlite
+      chmod +x $out/bin/cinetv2sqlite
+      wrapProgram $out/bin/cinetv2sqlite \
         --prefix PATH : "${pkgs.python38Packages.csvs-to-sqlite}/bin:${cinetv-migration}/bin:${cinetvlinking}/bin"
     '';
   }

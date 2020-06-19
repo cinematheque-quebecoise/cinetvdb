@@ -3,6 +3,8 @@
 {-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE TypeApplications #-}
 
+{-# LANGUAGE QuasiQuotes #-}
+
 module Run.NomLinking.Apply (applyAlgorithm) where
 
 import Import
@@ -17,22 +19,76 @@ import Data.Csv.Streaming (Records)
 import Data.Csv (defaultEncodeOptions, EncodeOptions(..))
 import Data.Csv.Incremental (encodeDefaultOrderedByNameWith, encodeNamedRecord)
 import qualified Data.Text as Text
-import Pipes ((>->), await, Consumer)
-import qualified Pipes as Pipes (runEffect, each)
-import qualified Pipes.Prelude as Pipes (map, mapM)
 import System.FilePath (joinPath)
 import System.IO.Error (isDoesNotExistError)
 import System.Directory (doesFileExist)
+
+-- import qualified Data.Text as Text
+-- import qualified Data.Text.IO as Text
+-- import qualified Data.Text.Internal.Builder as Text
+-- import qualified Data.Text.Lazy.Encoding as Text (encodeUtf8)
+-- import qualified Data.Text.Read as Text
+-- import Network.HTTP.Client
+-- import Database.SPARQL.Protocol.Client
+-- import NeatInterpolation
+-- import Prelude (print)
+-- import qualified Data.ByteString.Lazy.Char8 as BS
+-- import Database.HSparql.Connection
+-- import Database.HSparql.QueryGenerator
+
+-- getIRI :: RDFTerm -> Maybe Text
+-- getIRI (IRI iri) = Just iri
+-- getIRI _ = Nothing
 
 applyAlgorithm :: Bool -> RIO App ()
 applyAlgorithm willAnnotateAll = do
   logInfo $ "Linking Nom table to Wikidata..."
 
+  -- let sparqlEndpoint = "https://query.wikidata.org/bigdata/namespace/wdq/sparql?query"
+  -- response <- liftIO $ select sparqlEndpoint (textToLazyBs $ query)
+  -- liftIO $ print $ responseStatus response
+  -- let (SelectResult results) = responseBody response
+
+  -- liftIO $ Text.putStrLn query
+  -- liftIO $ BS.putStrLn $ textToLazyBs query
+  -- forM_ results $ \r -> do
+  --   liftIO $ print r
+
+  -- liftIO $ Text.putStrLn $ Text.pack $ createSelectQuery queryhsparql
+  -- result <- liftIO $ selectQueryRaw sparqlEndpoint $ Text.unpack query
+  -- liftIO $ print result
+  -- liftIO $ mapM print result
+  -- return ()
+
+  -- where
+  --   sparqlEndpoint = "http://query.wikidata.org/sparql"
+  --   -- sparqlEndpoint = "http://dbpedia.org/sparql"
+  --   textToLazyBs = Text.encodeUtf8 . Text.toLazyText . Text.fromText
+  --   query =
+  --     [text|PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+-- PREFIX wd: <http://www.wikidata.org/entity/>
+-- PREFIX wdt: <http://www.wikidata.org/prop/direct/>
+-- SELECT DISTINCT ?item
+-- WHERE
+-- {
+  -- { ?item rdfs:label "Michel Côté"@fr. } UNION
+  -- { ?item rdfs:label "Michel Côté"@en. }
+-- } LIMIT 10
+  --     |]
+  --   queryhsparql :: Query SelectQuery
+  --   queryhsparql = do
+  --     rdfs <- prefix "rdfs" (iriRef "http://www.w3.org/2000/01/rdf-schema#")
+
+  --     x <- var
+  --     triple_ x (rdfs .:. "label") (("Michel Brault", "fr") :: (Text, Text))
+
+  --     selectVars [x]
+
   outputdir <- fmap (optionsOutputDir . appOptions) ask
 
   allPersonFeatures <- fmap getDbPool ask >>= (liftIO . getPersonFeatures)
 
-  let fpath = joinPath [outputdir, "NomWd.csv"]
+  let fpath = joinPath [outputdir, "Nom_LienWikidata.csv"]
 
   -- RIO App (Either String [AlgorithmResult PersonFeatures])
   -- case algoResultsEither of
@@ -94,32 +150,22 @@ savePredictedOutputOfPersonFeatures :: (HasLogFunc env, HasDbPool env)
                                     -> [PersonFeatures] -- ^ Data to annotate
                                     -> RIO env ()
 savePredictedOutputOfPersonFeatures fpath dataToAnnotate = do
-  Pipes.runEffect $
-        Pipes.each dataToAnnotate
-    >-> Pipes.mapM predictPersonFeaturesOutput
-    >-> Pipes.map ((encodeDefaultOrderedByNameWith myOptions) . encodeNamedRecord)
-    >-> appendFileConsumer fpath
+  pooledForConcurrently_ dataToAnnotate $ \personFeatures -> do
+    personOutput <- predictPersonFeaturesOutput personFeatures
+    let result = (encodeDefaultOrderedByNameWith myOptions) $ encodeNamedRecord personOutput
+    liftIO $ BL.appendFile fpath $ result
 
   where
-    myOptions = defaultEncodeOptions {
-      encIncludeHeader = False
-    }
+    myOptions = defaultEncodeOptions { encIncludeHeader = False }
 
 predictPersonFeaturesOutput :: (HasLogFunc env, HasDbPool env)
                             => PersonFeatures
                             -> RIO env (AlgorithmResult PersonFeatures)
 predictPersonFeaturesOutput personFeatures = do
-  logInfo $ display $ "Linking NomID " <> personId personFeatures <> "..."
+  logInfo $ display $ "Linking NomID " <> (Text.pack . show . personId) personFeatures <> "..."
   predictedValue <- fmap (fromMaybe "NA") $ runAlgorithm personFeatures
   logInfo $ display $ " to " <> predictedValue
   return $ AlgorithmResult personFeatures predictedValue
-
-appendFileConsumer :: (MonadIO m)
-                   => FilePath
-                   -> Consumer BL.ByteString m ()
-appendFileConsumer fpath = forever $ do
-  result <- Pipes.await
-  liftIO $ BL.appendFile fpath result
 
 recordsToList :: Records a -> [a]
 recordsToList records = foldr (\p acc -> mconcat [[p], acc]) [] records

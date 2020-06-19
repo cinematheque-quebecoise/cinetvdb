@@ -7,7 +7,7 @@ import RIO
 import Data.Csv (DefaultOrdered(..), ToNamedRecord(..), (.=), namedRecord, header)
 
 data FilmoLinked = FilmoLinked
-  { filmoLinkedId :: Text
+  { filmoLinkedId :: Int64
   , filmoLinkedWdLink :: Text
   }
 

@@ -9,7 +9,7 @@ import Data.Csv (DefaultOrdered(..), ToNamedRecord(..), (.=), namedRecord, heade
 data Place = Location Text | SubLocation Text
 
 data PaysLinked = PaysLinked
-  { paysLinkedId :: Text
+  { paysLinkedId :: Int64
   , paysLinkedTerme :: Text
   , paysLinkedWdLink :: Text
   -- , paysLinkedWdLabel :: Text

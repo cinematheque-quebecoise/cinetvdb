@@ -35,7 +35,7 @@ run pool = do
     encUseCrLf = False
   , encIncludeHeader = True
   }
-  liftIO $ BL.writeFile "PaysWd.csv" $ encodeDefaultOrderedByNameWith myOptions $ linkedCountries
+  liftIO $ BL.writeFile "Pays_LienWikidata.csv" $ encodeDefaultOrderedByNameWith myOptions $ linkedCountries
 
   logInfo "Completed linking!"
 
@@ -74,10 +74,10 @@ linkCountry pays = do
       Just paysLinked -> do
         return paysLinked
       Nothing -> do
-        return $ PaysLinked paysTextId paysTermeText ""
+        return $ PaysLinked paysId paysTermeText ""
 
   where
-    paysTextId = Text.pack $ show $ fromSqlKey $ entityKey pays
+    paysId = fromSqlKey $ entityKey pays
     paysTermeText = paysTerme $ entityVal pays
 
     getLinkedCountry :: [Map Text SPARQL.RDFTerm] -> Maybe PaysLinked
@@ -86,19 +86,19 @@ linkCountry pays = do
       -- let uris = fmap ((\(SPARQL.IRI uri) -> uri) . fromJust . Map.lookup "place") results
       let uris = catMaybes $ fmap (getIRI . fromJust . Map.lookup "place") results
       guard $ length uris > 0
-      return $ PaysLinked paysTextId paysTermeText $ Text.intercalate " ; " uris
+      return $ PaysLinked paysId paysTermeText $ Text.intercalate " ; " uris
       -- result <- getIfSoleResult results
       -- (SPARQL.IRI placeUri) <- Map.lookup "place" result
       -- (SPARQL.Literal placeLabel) <- Map.lookup "placeLabel" result
-      -- return $ PaysLinked paysTextId paysTermeText placeUri
+      -- return $ PaysLinked paysId paysTermeText placeUri
     textToLazyBs = Text.encodeUtf8 . Text.toLazyText . Text.fromText
 
     getIRI :: SPARQL.RDFTerm -> Maybe Text
     getIRI (SPARQL.IRI uri) = Just uri
     getIRI _ = Nothing
 
-    httpExceptionHandler (HttpExceptionRequest _ _) = return $ PaysLinked paysTextId paysTermeText ""
-    httpExceptionHandler (InvalidUrlException _ _) = return $ PaysLinked paysTextId paysTermeText ""
+    httpExceptionHandler (HttpExceptionRequest _ _) = return $ PaysLinked paysId paysTermeText ""
+    httpExceptionHandler (InvalidUrlException _ _) = return $ PaysLinked paysId paysTermeText ""
 
 parsePaysTerme :: Text -> Place
 parsePaysTerme t =

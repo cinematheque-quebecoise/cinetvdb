@@ -44,8 +44,9 @@ dependencies:
 - random
 - vector
 - foldl
-- pipes
 - filepath
+- unliftio
+- hsparql
 
 ghc-options:
 - -Wall

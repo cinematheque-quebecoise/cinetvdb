@@ -19,9 +19,6 @@ import qualified Data.Text.IO as Text
 import qualified Data.Text.Lazy.Builder as Text
 import qualified Data.Text.Lazy.Builder.Int as Text
 import qualified Data.Text.Lazy.Builder.RealFloat as Text
-import Pipes ((>->), await, Consumer)
-import qualified Pipes as Pipes (runEffect, each)
-import qualified Pipes.Prelude as Pipes (map, mapM)
 import Text.Tabl (tabl, Environment(EnvAscii), Decoration(..), Alignment(..))
 import qualified Data.Map as Map
 import Data.Map.Monoidal (MonoidalMap)
@@ -202,7 +199,6 @@ realFloatToText = Text.toStrict
 intToText :: Integral a => a -> Text.Text
 intToText = Text.toStrict . Text.toLazyText . Text.decimal
 
-
 applyAlgorithmToAnnotatedData :: IsTestingMode -> RIO App ()
 applyAlgorithmToAnnotatedData isTesting = do
   logInfo $ "Applying algorithm on "
@@ -225,36 +221,23 @@ applyAlgorithmToAnnotatedData isTesting = do
          <> (if isTesting then "test" else "validation")
          <> " set."
 
-saveEvaluationResults :: FilePath
+saveEvaluationResults :: (HasDbPool env)
+                      => FilePath
                       -> Records (AnnotatedFeatures PersonFeatures)
-                      -> RIO App ()
+                      -> RIO env ()
 saveEvaluationResults fpath records = do
-  -- env <- ask
-  -- let creditsFetcher = createCineTvCreditsFetcher $ getDbPool env
   writeFileUtf8 fpath "id,firstname,lastname,notes,fonctions,output,actual\r\n"
-  Pipes.runEffect $
-        Pipes.each records
-    -- >-> Pipes.mapM (\r -> (AlgorithmResult r) <$> runAlgorithm r)
-    >-> Pipes.mapM (\r -> do predictedMaybe <- runAlgorithm (features r)
-                             case predictedMaybe of
-                               Just predicted -> do
-                                 let qid = Text.replace "http://www.wikidata.org/entity/" "" predicted
-                                 return $ AlgorithmResult r qid
-                               Nothing -> return $ AlgorithmResult r "NA"
-                   )
-    >-> Pipes.map ((encodeDefaultOrderedByNameWith myOptions) . encodeNamedRecord)
-    >-> appendFileConsumer fpath
 
-  return ()
+  pooledForConcurrently_ records $ \r -> do
+    predictedMaybe <- runAlgorithm (features r)
+    let wikidataEntityUri = "http://www.wikidata.org/entity/"
+    let personOutput = (case predictedMaybe of
+          Just predicted ->
+            let qid = Text.replace wikidataEntityUri "" predicted
+             in AlgorithmResult r qid
+          Nothing -> AlgorithmResult r "NA")
+    let result = (encodeDefaultOrderedByNameWith myOptions) $ encodeNamedRecord personOutput
+    liftIO $ BL.appendFile fpath $ result
 
-  where myOptions = defaultEncodeOptions {
-    encIncludeHeader = False
-  }
-
-appendFileConsumer :: (MonadIO m)
-                   => FilePath
-                   -> Consumer BL.ByteString m ()
-appendFileConsumer fpath = forever $ do
-  result <- Pipes.await
-  liftIO $ BL.appendFile fpath result
-
+  where
+    myOptions = defaultEncodeOptions { encIncludeHeader = False }
