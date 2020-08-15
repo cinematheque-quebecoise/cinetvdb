@@ -96,7 +96,7 @@ utilisons l'outil `Cabal` (devrait être disponible grace à `nix-shell`).
 cabal build
 
 # Pour tester l'exécutable
-cabal run cq2rdf-exe -- --help
+cabal run cinetvlinking-exe -- --help
 ```
 
 ### Génération d'un exécutable
@@ -107,4 +107,4 @@ Générez l'exécutable avec :
 $ nix-build release.nix
 ```
 
-L'exécutable devient disponible dans le chemin relatif `./result/bin/cq2rdf-exe`.
+L'exécutable devient disponible dans le chemin relatif `./result/bin/cinetvlinking-exe`.
