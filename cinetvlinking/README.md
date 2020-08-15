@@ -19,8 +19,61 @@ Available options:
 
 Available commands:
   nom                      Link Nom table to Wikidata.
-  pays                     Link Pays table to Wikidata.
   filmo                    Link Filmo table to Wikidata.
+
+$ cinetvlinking-exe nom --help
+Usage: cinetvlinking-exe nom COMMAND
+  Link Nom table to Wikidata.
+
+Available options:
+  -h,--help                Show this help text
+
+Available commands:
+  preprocess               Preprocess data for linking Nom table.
+  evaluate                 Apply algorithm on annotated dataset.
+  evaluate-result          Evaluate algorithm on generated dataset.
+  apply                    Apply algorithm on unannotated dataset.
+
+$ cinetvlinking-exe nom preprocess --help
+Usage: cinetvlinking-exe nom preprocess TOTAL_DATA_SIZE VALIDATION_DATA_RATIO
+  Preprocess data for linking Nom table.
+
+Available options:
+  -h,--help                Show this help text
+
+$ cinetvlinking-exe nom evaluate --help
+Usage: cinetvlinking-exe nom evaluate [-t|--test]
+  Apply algorithm on annotated dataset.
+
+Available options:
+  -h,--help                Show this help text
+  -t,--test                Final testin
+
+$ cinetvlinking-exe nom evaluate-result --help
+Usage: cinetvlinking-exe nom evaluate-result [-t|--test]
+  Evaluate algorithm on generated dataset.
+
+Available options:
+  -h,--help                Show this help text
+  -t,--test                Final testing
+
+$ cinetvlinking-exe nom apply --help
+Usage: cinetvlinking-exe nom apply [-r|--restart]
+  Apply algorithm on unannotated dataset.
+
+Available options:
+  -h,--help                Show this help text
+  -r,--restart             Algorithm application on ALL data (even if already
+                           annotated)
+
+$ cinetvlinking-exe filmo --help
+Usage: cinetvlinking-exe filmo [-r|--restart]
+  Link Filmo table to Wikidata.
+
+Available options:
+  -h,--help                Show this help text
+  -r,--restart             Algorithm application on ALL data (even if already
+                           annotated)
 ```
 
 ## Compilation
