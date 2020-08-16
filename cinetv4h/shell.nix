@@ -1,13 +1,16 @@
-{ nixpkgs ? import <nixpkgs> {} }:
 let
-  inherit (nixpkgs) pkgs;
-  inherit (pkgs) haskellPackages;
+  pkgs = import ./nixpkgs.nix;
+  project = import ./release.nix;
 
-  project = import ./default.nix;
-in
-pkgs.stdenv.mkDerivation {
-  name = "shell";
+in pkgs.mkShell {
   buildInputs = project.env.nativeBuildInputs ++ [
-    haskellPackages.cabal-install pkgs.zlib
+    pkgs.haskellPackages.cabal-install
+    pkgs.zlib
   ];
+
+  LANG = "en_US.UTF-8";
+
+  shellHook = ''
+    export SSL_CERT_FILE=/etc/ssl/certs/ca-bundle.crt
+  '';
 }

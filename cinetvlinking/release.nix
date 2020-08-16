@@ -8,6 +8,7 @@ let
     ref = "refs/heads/nixos-unstable";
     rev = "7c399a4ee080f33cc500a3fda33af6fccfd617bd";
   }) {};
+  # pkgs = import ./nixpkgs.nix;
 
   compiler = "ghc883";
 in

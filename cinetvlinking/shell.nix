@@ -1,6 +1,4 @@
-{ nixpkgs ? import <nixpkgs> {} }:
 let
-
   pkgs = import ./nixpkgs.nix;
   project = import ./release.nix;
 
