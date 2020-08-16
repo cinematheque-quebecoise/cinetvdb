@@ -2,6 +2,12 @@
 
 Répertoire qui contient des programmes reliés à CineTV de la Cinémathèque québécoise.
 
+## Environnement de développement
+
+Conçu pour fonctionner sur GNU/Linux avec le programme `nix`.
+
+Pour utiliser correctement les commandes ci-bas, entrez dans le bon environnement avec `nix-shell`.
+
 ## Compilation
 
 ```
