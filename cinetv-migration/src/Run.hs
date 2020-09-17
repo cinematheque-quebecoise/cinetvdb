@@ -103,6 +103,8 @@ migrateDatabase sqliteDbPath newSqliteDbPath = do
   paysLienWikidata <- liftIO $ getPaysLienWikidata ipool
   logInfo "Fetching Filmo_GenresCategories table..."
   filmoGenresCategories <- liftIO $ getFilmoGenresCategories ipool
+  logInfo "Fetching GenresCategories table..."
+  genresCategoriesLienWikidata <- liftIO $ getGenresCategoriesLienWikidata ipool
   -- logInfo "Fetching Fonction_LienWikidata table..."
   -- fonctionLienWikidata <- liftIO $ getFonctionLienWikidata ipool
   logInfo "Fetching Filmo_Generique table..."
@@ -149,6 +151,8 @@ migrateDatabase sqliteDbPath newSqliteDbPath = do
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) paysLienWikidata
     liftIO $ Text.putStrLn "Writing Filmo_GenresCategories entities to database..."
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) filmoGenresCategories
+    liftIO $ Text.putStrLn "Writing GenresCategories_LienWikidata entities to database..."
+    mapM_ (\c -> insertKey (entityKey c) (entityVal c)) genresCategoriesLienWikidata
     -- liftIO $ Text.putStrLn "Writing Fonction_LienWikidata entities to database..."
     -- mapM_ (\c -> insertKey (entityKey c) (entityVal c)) fonctionLienWikidata
     liftIO $ Text.putStrLn "Writing Filmo_Generique entities to database..."
@@ -354,6 +358,17 @@ getFilmoGenresCategories pool = do
            &&. filmoGenresCategories ^. Filmo_GenresCategoriesSujetId ==. sujet ^. SujetId
              )
       return filmoGenresCategories
+
+getGenresCategoriesLienWikidata :: Pool SqlBackend
+                                -> IO [Entity GenresCategories_LienWikidata]
+getGenresCategoriesLienWikidata pool = do
+  liftIO $ flip runSqlPersistMPool pool $ do
+    select $
+      distinct $
+      from $ \(sujet, genresCategoriesLienWikidata) -> do
+      where_ ( genresCategoriesLienWikidata ^. GenresCategories_LienWikidataSujetId ==. sujet ^. SujetId
+             )
+      return genresCategoriesLienWikidata
 
 getFilmoGenerique :: Pool SqlBackend
                   -> IO [Entity Filmo_Generique]

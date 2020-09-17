@@ -70,6 +70,11 @@ Filmo_GenresCategories
   filmoId FilmoId
   sujetId SujetId
 
+GenresCategories_LienWikidata
+  sujetId SujetId
+  lienWikidata Text Maybe
+  Primary sujetId
+
 Filmo_Generique
   Id sql=GeneriqueId
   fonctionId FonctionId
@@ -80,12 +85,12 @@ Filmo_Generique
 FilmoResumes
   Id sql=FilmoResumeID
   filmoId FilmoId
-  resume Text Maybe
+  resume Text
 
 FilmoResumesAnglais
   Id sql=FilmoResumeAnglaisID
   filmoId FilmoId
-  resumeAnglais Text Maybe
+  resumeAnglais Text
 
 FilmoDureesOriginales
   Id sql=DureesOriginalesID

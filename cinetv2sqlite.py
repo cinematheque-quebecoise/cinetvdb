@@ -67,7 +67,7 @@ def main(args):
         os.system(f'cinetvlinking-exe nom apply -d {cinetvDbPath} -o {args["-e"]}')
 
         csvFilesExtPattern = path.join(args['-e'], '*.csv')
-        cinetvExtDbPath = path.join(outputdir, f'cinetv-{date}-ext.db')
+        cinetvExtDbPath = path.join(outputdir, f'cinetv-{date}-ext.d')
         print(f'Converting generated CSV files from {csvFilesPattern} and {csvFilesExtPattern} to SQLite database at {cinetvExtDbPath}')
         os.system(f'csvs-to-sqlite {csvFilesPattern} {csvFilesExtPattern} {cinetvExtDbPath}')
         print(f'Migrate CineTV database {cinetvExtDbPath} to a public subset at {outputdir}')
