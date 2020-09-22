@@ -85,12 +85,12 @@ Filmo_Generique
 FilmoResumes
   Id sql=FilmoResumeID
   filmoId FilmoId
-  resume Text
+  resume Text Maybe
 
 FilmoResumesAnglais
   Id sql=FilmoResumeAnglaisID
   filmoId FilmoId
-  resumeAnglais Text
+  resumeAnglais Text Maybe
 
 FilmoDureesOriginales
   Id sql=DureesOriginalesID

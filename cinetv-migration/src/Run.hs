@@ -121,6 +121,8 @@ migrateDatabase sqliteDbPath newSqliteDbPath = do
   typeTitre <- liftIO $ getTypeTitre ipool
   logInfo "Fetching FilmoTitres table..."
   filmoTitres <- liftIO $ getFilmoTitres ipool
+  logInfo "Fetching FilmoDureesOriginales table..."
+  filmoDureesOriginales <- liftIO $ getFilmoDureesOriginales ipool
 
   flip liftSqlPersistMPool opool $ do
     liftIO $ Text.putStrLn "Writing Film entities to database..."
@@ -169,6 +171,8 @@ migrateDatabase sqliteDbPath newSqliteDbPath = do
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) typeTitre
     liftIO $ Text.putStrLn "Writing FilmoTitres entities to database..."
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) filmoTitres
+    liftIO $ Text.putStrLn "Writing FilmoDureesOriginales entities to database..."
+    mapM_ (\c -> insertKey (entityKey c) (entityVal c)) filmoDureesOriginales
 
     -- runConduit $ selectSource (distinct $ from $ \film_filmo -> return film_filmo)
     --           .| (CL.mapM_ (\(e :: Entity Pays) -> insertKey (entityKey e) (entityVal e)))
@@ -462,4 +466,15 @@ getFilmoTitres pool = do
       from $ \(filmo, filmoTitres) -> do
       where_ $ filmoTitres ^. FilmoTitresFilmoId ==. filmo ^. FilmoId
       return filmoTitres
+
+getFilmoDureesOriginales :: (MonadIO m)
+                         => Pool SqlBackend
+                         -> m [Entity FilmoDureesOriginales]
+getFilmoDureesOriginales pool = do
+  liftIO $ flip liftSqlPersistMPool pool $ do
+    select $
+      distinct $
+      from $ \(filmo, filmoDureesOriginales) -> do
+      where_ $ filmoDureesOriginales ^. FilmoDureesOriginalesFilmoId ==. filmo ^. FilmoId
+      return filmoDureesOriginales
 
