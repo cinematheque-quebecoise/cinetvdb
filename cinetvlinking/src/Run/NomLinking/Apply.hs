@@ -1,9 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
-{-# LANGUAGE TypeApplications #-}
-
-{-# LANGUAGE QuasiQuotes #-}
 
 module Run.NomLinking.Apply (applyAlgorithm) where
 
@@ -11,12 +7,12 @@ import Import
 import Run.NomLinking.Algorithm (runAlgorithm)
 import Types.AlgorithmResult (AlgorithmResult(..), readAlgorithmResults)
 import Types.PersonFeatures
-import Run.NomLinking.Model (getPersonFeatures)
+import Run.NomLinking.Model (getPersonFeatures, selectNomLienWikidataIds)
 import qualified Data.ByteString.Lazy as BL
+import           Database.Esqueleto (fromSqlKey)
 import qualified Data.Set as Set
-import Data.Csv (DefaultOrdered(..))
 import Data.Csv.Streaming (Records)
-import Data.Csv (defaultEncodeOptions, EncodeOptions(..))
+import Data.Csv (DefaultOrdered(..), defaultEncodeOptions, EncodeOptions(..), encodeByName)
 import Data.Csv.Incremental (encodeDefaultOrderedByNameWith, encodeNamedRecord)
 import qualified Data.Text as Text
 import System.FilePath (joinPath)
@@ -42,59 +38,26 @@ import System.Directory (doesFileExist)
 
 applyAlgorithm :: Bool -> RIO App ()
 applyAlgorithm willAnnotateAll = do
-  logInfo $ "Linking Nom table to Wikidata..."
-
-  -- let sparqlEndpoint = "https://query.wikidata.org/bigdata/namespace/wdq/sparql?query"
-  -- response <- liftIO $ select sparqlEndpoint (textToLazyBs $ query)
-  -- liftIO $ print $ responseStatus response
-  -- let (SelectResult results) = responseBody response
-
-  -- liftIO $ Text.putStrLn query
-  -- liftIO $ BS.putStrLn $ textToLazyBs query
-  -- forM_ results $ \r -> do
-  --   liftIO $ print r
-
-  -- liftIO $ Text.putStrLn $ Text.pack $ createSelectQuery queryhsparql
-  -- result <- liftIO $ selectQueryRaw sparqlEndpoint $ Text.unpack query
-  -- liftIO $ print result
-  -- liftIO $ mapM print result
-  -- return ()
-
-  -- where
-  --   sparqlEndpoint = "http://query.wikidata.org/sparql"
-  --   -- sparqlEndpoint = "http://dbpedia.org/sparql"
-  --   textToLazyBs = Text.encodeUtf8 . Text.toLazyText . Text.fromText
-  --   query =
-  --     [text|PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
--- PREFIX wd: <http://www.wikidata.org/entity/>
--- PREFIX wdt: <http://www.wikidata.org/prop/direct/>
--- SELECT DISTINCT ?item
--- WHERE
--- {
-  -- { ?item rdfs:label "Michel Côté"@fr. } UNION
-  -- { ?item rdfs:label "Michel Côté"@en. }
--- } LIMIT 10
-  --     |]
-  --   queryhsparql :: Query SelectQuery
-  --   queryhsparql = do
-  --     rdfs <- prefix "rdfs" (iriRef "http://www.w3.org/2000/01/rdf-schema#")
-
-  --     x <- var
-  --     triple_ x (rdfs .:. "label") (("Michel Brault", "fr") :: (Text, Text))
-
-  --     selectVars [x]
+  logInfo "Linking Nom table to Wikidata..."
 
   outputdir <- fmap (optionsOutputDir . appOptions) ask
 
-  allPersonFeatures <- fmap getDbPool ask >>= (liftIO . getPersonFeatures)
+  pool <- getDbPool <$> ask
+
+  -- get manually annotated data (SQLite db)
+  -- get automatically classified data (CSV file)
+  -- get all data (from SQLite db)
+  -- if willAnnotateAll
+  -- then dataToAnnotate = all data - manually annotated data
+  -- else dataToAnnotate = all data - manually annotated data - automatically classified data
+
+  manuallyAnnotatedPersonKeys <- selectNomLienWikidataIds pool
+  let manuallyAnnotatedPersonIds = Set.fromList $ fromSqlKey <$> manuallyAnnotatedPersonKeys
+
+  allPersonFeatures <- liftIO $ getPersonFeatures pool
 
   let fpath = joinPath [outputdir, "Nom_LienWikidata.csv"]
 
-  -- RIO App (Either String [AlgorithmResult PersonFeatures])
-  -- case algoResultsEither of
-  --   Left err -> do
-  --     logError $ display $ Text.pack err
-  --     exitFailure
   e <- tryJust (guard . isDoesNotExistError) $ do
     annotatedPersonFeaturesE <- readAnnotatedPersonFeatures fpath
     case annotatedPersonFeaturesE of
@@ -102,13 +65,26 @@ applyAlgorithm willAnnotateAll = do
         logError $ display $ Text.pack err
         exitFailure
       Right annotatedPersonFeatures -> return annotatedPersonFeatures
+  let autoAnnotatedPersons = either (const []) id e
 
-  let annotatedData = either (const []) id e
-  let dataToAnnotate = getDataToPredict willAnnotateAll allPersonFeatures annotatedData
+  let filteredAutoAnnotatedPersons = filter (\p -> Set.notMember (personId $ input p) manuallyAnnotatedPersonIds) autoAnnotatedPersons
+  let filteredAutoAnnotatedPersonIds = Set.fromList $ (personId . input) <$> filteredAutoAnnotatedPersons
+  when (length autoAnnotatedPersons > 0) $ do
+    let header = headerOrder (undefined :: AlgorithmResult PersonFeatures)
+    liftIO $ BL.writeFile fpath $ encodeByName header filteredAutoAnnotatedPersons
 
-  logInfo $ display $ (Text.pack $ show $ length annotatedData)
+  -- let dataToAnnotate = getDataToPredict willAnnotateAll allPersonFeatures annotatedPersonIds annotatedData
+  let allAnnotatedPersonIds = manuallyAnnotatedPersonIds <> filteredAutoAnnotatedPersonIds
+  let peopleToAnnotate = if willAnnotateAll
+                     then filter (\p -> Set.notMember (personId p) manuallyAnnotatedPersonIds) allPersonFeatures
+                     else filter (\p -> Set.notMember (personId p) allAnnotatedPersonIds) allPersonFeatures
+  -- let annotatedDataIdsSet = foldr Set.insert Set.empty annotatedPersonIds
+  --     unannotatedData = filter (\p -> Set.notMember (personId p) annotatedDataIdsSet) allPersonFeatures
+  --  in if willAnnotateAll then annotatedData ++ unannotatedData else unannotatedData
+
+  logInfo $ display $ Text.pack (show $ if willAnnotateAll then length manuallyAnnotatedPersonIds else length allAnnotatedPersonIds)
                    <> " instances are already annotated!"
-  logInfo $ display $ (Text.pack $ show $ length dataToAnnotate)
+  logInfo $ display $ Text.pack (show $ length peopleToAnnotate)
                    <> " will be annotated..."
 
   fpathExists <- liftIO $ doesFileExist fpath
@@ -117,18 +93,17 @@ applyAlgorithm willAnnotateAll = do
                    $ fmap (decodeUtf8With (\_ _ -> Nothing))
                    $ toList
                    $ headerOrder (undefined :: AlgorithmResult PersonFeatures)
-
     writeFileUtf8 fpath $ headerLine <> "\r\n"
 
-  savePredictedOutputOfPersonFeatures fpath dataToAnnotate
+  savePredictedOutputOfPersonFeatures fpath peopleToAnnotate
 
 readAnnotatedPersonFeatures :: (MonadIO m)
                             => FilePath
-                            -> m (Either String [PersonFeatures])
+                            -> m (Either String [AlgorithmResult PersonFeatures])
 readAnnotatedPersonFeatures fpath = do
   algoResultsCsv <- readAlgorithmResults fpath
   let algoResultsE = fmap (recordsToList . snd) algoResultsCsv
-  return $ fmap (fmap input . (foldr (\p acc -> mconcat [[p], acc]) [])) algoResultsE
+  return $ fmap (foldr (\p acc -> mconcat [[p], acc]) []) algoResultsE
   -- case algoResultsEither of
   --   Left err -> do
   --     logError $ display $ Text.pack err
@@ -136,24 +111,28 @@ readAnnotatedPersonFeatures fpath = do
   --   Right annotatedDataRecords -> do
   --     return $ fmap input $ foldr (\p acc -> mconcat [[p], acc]) [] annotatedDataRecords
 
-getDataToPredict :: Bool -- ^ If true, will reannotated all data!
-                 -> [PersonFeatures] -- ^ Person features from database
-                 -> [PersonFeatures] -- ^ Already annotated data
-                 -> [PersonFeatures]
-getDataToPredict willAnnotateAll allPersonFeatures annotatedData =
-  let annotatedDataIdsSet = foldr Set.insert Set.empty $ fmap personId annotatedData
-      unannotatedData = filter (\p -> Set.notMember (personId p) annotatedDataIdsSet) allPersonFeatures
-   in if willAnnotateAll then annotatedData ++ unannotatedData else unannotatedData
+-- getDataToPredict :: Bool -- ^ If true, will reannotated all data!
+--                  -> [PersonFeatures] -- ^ Person features from database
+--                  -> [Int64] -- ^ Manually annotated person ids
+--                  -> [PersonFeatures] -- ^ Already classified person features
+--                  -> [PersonFeatures]
+-- getDataToPredict willAnnotateAll allPersonFeatures annotatedPersonIds =
+--   -- let annotatedDataIdsSet = foldr Set.insert Set.empty $ fmap personId annotatedData
+--   let annotatedDataIdsSet = foldr Set.insert Set.empty annotatedPersonIds
+--       unannotatedData = filter (\p -> Set.notMember (personId p) annotatedDataIdsSet) allPersonFeatures
+--    in if willAnnotateAll then annotatedData ++ unannotatedData else unannotatedData
 
 savePredictedOutputOfPersonFeatures :: (HasLogFunc env, HasDbPool env)
                                     => FilePath
                                     -> [PersonFeatures] -- ^ Data to annotate
                                     -> RIO env ()
-savePredictedOutputOfPersonFeatures fpath dataToAnnotate = do
-  pooledForConcurrently_ dataToAnnotate $ \personFeatures -> do
-    personOutput <- predictPersonFeaturesOutput personFeatures
-    let result = (encodeDefaultOrderedByNameWith myOptions) $ encodeNamedRecord personOutput
-    liftIO $ BL.appendFile fpath $ result
+savePredictedOutputOfPersonFeatures fpath dataToAnnotate =
+  withFile fpath AppendMode $ \h ->
+    pooledForConcurrently_ dataToAnnotate $ \personFeatures -> do
+      personOutput <- predictPersonFeaturesOutput personFeatures
+      let result = encodeDefaultOrderedByNameWith myOptions $ encodeNamedRecord personOutput
+      liftIO $ BL.hPut h result
+      -- liftIO $ BL.appendFile fpath result
 
   where
     myOptions = defaultEncodeOptions { encIncludeHeader = False }
@@ -162,10 +141,12 @@ predictPersonFeaturesOutput :: (HasLogFunc env, HasDbPool env)
                             => PersonFeatures
                             -> RIO env (AlgorithmResult PersonFeatures)
 predictPersonFeaturesOutput personFeatures = do
-  logInfo $ display $ "Linking NomID " <> (Text.pack . show . personId) personFeatures <> "..."
-  predictedValue <- fmap (fromMaybe "NA") $ runAlgorithm personFeatures
-  logInfo $ display $ " to " <> predictedValue
+  predictedValue <- fromMaybe "NA" <$> runAlgorithm personFeatures
+  logInfo $ display $ "Linking NomID "
+                   <> (Text.pack . show . personId) personFeatures
+                   <> " to "
+                   <> predictedValue
   return $ AlgorithmResult personFeatures predictedValue
 
 recordsToList :: Records a -> [a]
-recordsToList records = foldr (\p acc -> mconcat [[p], acc]) [] records
+recordsToList = foldr (\p acc -> mconcat [[p], acc]) []

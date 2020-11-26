@@ -11,13 +11,13 @@ import Database.Persist.Class (PersistConfigPool)
 import Database.Persist.Sqlite (SqliteConf(..), SqlBackend)
 
 data Command = CountryLinking
-             | FilmoLinking Bool
-             | NomLinking NomLinkingCommand
+             | FilmoLinking !Bool
+             | NomLinking !NomLinkingCommand
 
-data NomLinkingCommand = NomLinkingPreprocess Integer Double
-                       | NomLinkingEvaluation Bool
-                       | NomLinkingEvaluationResults Bool
-                       | NomLinkingApply Bool
+data NomLinkingCommand = NomLinkingPreprocess !FilePath !Integer !Double
+                       | NomLinkingEvaluation !Bool
+                       | NomLinkingEvaluationResults !Bool
+                       | NomLinkingApply !Bool
 
 -- | Command line arguments
 data Options = Options

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 698e0a5544ba5f55d7220d27b3bf12c67ebb1f680a7b5d65ae7744d1ae868c17
+-- hash: c129b67a4d4fb8e9d14a35046a1eed90396e738e9298f04cb08dcdaafb6f88ba
 
 name:           cinetvlinking
 version:        0.1.0.0
@@ -29,7 +29,6 @@ library
       Data.List.Extended
       Import
       Run
-      Run.CountryLinking
       Run.FilmoLinking
       Run.NomLinking.Algorithm
       Run.NomLinking.Apply

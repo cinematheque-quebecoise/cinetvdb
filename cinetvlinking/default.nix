@@ -1,27 +1,39 @@
-{ pkgs, compiler ? "ghc883" }:
-let
-  haskellPackages = pkgs.haskell.packages.${compiler};
-
-  rdf4hPackage = haskellPackages.callCabal2nix "rdf4h" (builtins.fetchGit {
-    url = "https://github.com/robstewart57/rdf4h.git";
-    ref = "refs/heads/master";
-    rev = "35d7a7948fd869faa7eb98c7fe1c47c3bd341c24";
-  }) {};
-
-  haskellPackagesOverride = haskellPackages.override {
-    overrides = self: upser: rec {
-      rdf4h = pkgs.haskell.lib.dontCheck rdf4hPackage;
-    };
-  };
-
-  hsparqlPackage = haskellPackagesOverride.callCabal2nix "hsparql" (builtins.fetchGit {
-    url = "https://github.com/robstewart57/hsparql.git";
-    ref = "refs/heads/master";
-    rev = "ac11fa787aa4317675d34ccb0009b7cda8b87550";
-  }) {};
-
-in
-  haskellPackagesOverride.callCabal2nix "cinetvlinking" (./.) {
-    cinetv4h = haskellPackages.callCabal2nix "cinetv4h" (./../cinetv4h) {};
-    hsparql = pkgs.haskell.lib.dontCheck hsparqlPackage;
-  }
+{ mkDerivation, base, bytestring, cassava, cinetv4h, containers
+, directory, either, esqueleto, filepath, foldl, hpack, hsparql
+, hspec, http-client, monoidal-containers, neat-interpolation
+, optparse-simple, persistent, persistent-sqlite, random
+, resource-pool, rio, sparql-protocol, stdenv, tabl, text, text-icu
+, transformers, unliftio, unordered-containers, vector
+}:
+mkDerivation {
+  pname = "cinetvlinking";
+  version = "0.1.0.0";
+  src = ./.;
+  isLibrary = true;
+  isExecutable = true;
+  libraryHaskellDepends = [
+    base bytestring cassava cinetv4h containers directory either
+    esqueleto filepath foldl hsparql http-client monoidal-containers
+    neat-interpolation persistent persistent-sqlite random
+    resource-pool rio sparql-protocol tabl text text-icu transformers
+    unliftio unordered-containers vector
+  ];
+  libraryToolDepends = [ hpack ];
+  executableHaskellDepends = [
+    base bytestring cassava cinetv4h containers directory either
+    esqueleto filepath foldl hsparql http-client monoidal-containers
+    neat-interpolation optparse-simple persistent persistent-sqlite
+    random resource-pool rio sparql-protocol tabl text text-icu
+    transformers unliftio unordered-containers vector
+  ];
+  testHaskellDepends = [
+    base bytestring cassava cinetv4h containers directory either
+    esqueleto filepath foldl hsparql hspec http-client
+    monoidal-containers neat-interpolation persistent persistent-sqlite
+    random resource-pool rio sparql-protocol tabl text text-icu
+    transformers unliftio unordered-containers vector
+  ];
+  prePatch = "hpack";
+  homepage = "https://github.com/githubuser/cinetvlinking#readme";
+  license = stdenv.lib.licenses.bsd3;
+}

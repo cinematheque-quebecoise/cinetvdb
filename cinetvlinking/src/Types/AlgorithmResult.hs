@@ -31,13 +31,13 @@ instance FromNamedRecord (AlgorithmResult PersonFeatures) where
 
 instance (ToNamedRecord i) => ToNamedRecord (AlgorithmResult i) where
   toNamedRecord AlgorithmResult{..} =
-    namedRecord $ (HM.toList $ toNamedRecord $ input) <> ["LienWikidata" .= predictedValue]
+    namedRecord $ HM.toList (toNamedRecord input) <> ["LienWikidata" .= predictedValue, "Verifie" .= ("0" :: Text)]
 
 instance DefaultOrdered (AlgorithmResult PersonFeatures) where
-  headerOrder _ = headerOrder (undefined :: PersonFeatures) <> header ["LienWikidata"]
+  headerOrder _ = headerOrder (undefined :: PersonFeatures) <> header ["LienWikidata", "Verifie"]
 
 instance DefaultOrdered (AlgorithmResult (AnnotatedFeatures PersonFeatures)) where
-  headerOrder _ = headerOrder (undefined :: (AnnotatedFeatures PersonFeatures)) <> header ["LienWikidata"]
+  headerOrder _ = headerOrder (undefined :: (AnnotatedFeatures PersonFeatures)) <> header ["LienWikidata", "Verifie"]
 
 readAlgorithmTrainResults :: (MonadIO m)
                           => FilePath

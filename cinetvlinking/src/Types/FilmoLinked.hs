@@ -13,9 +13,9 @@ data FilmoLinked = FilmoLinked
 
 instance ToNamedRecord FilmoLinked where
   toNamedRecord FilmoLinked {..} =
-    namedRecord $ [ "FilmoId" .= filmoLinkedId
-                  , "LienWikidata" .= filmoLinkedWdLink
-                  ]
+    namedRecord [ "FilmoId" .= filmoLinkedId
+                , "LienWikidata" .= filmoLinkedWdLink
+                ]
 
 instance DefaultOrdered FilmoLinked where
     headerOrder _ = header [ "FilmoId"

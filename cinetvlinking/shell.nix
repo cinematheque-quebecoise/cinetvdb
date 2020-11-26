@@ -1,10 +1,15 @@
 let
   pkgs = import ./nixpkgs.nix;
   project = import ./release.nix;
+  haskellPackages = pkgs.haskell.packages.ghc883;
 
 in pkgs.mkShell {
   buildInputs = project.env.nativeBuildInputs ++ [
-    pkgs.haskellPackages.cabal-install
+    haskellPackages.cabal-install
+    haskellPackages.cabal2nix
+    haskellPackages.hlint
+    haskellPackages.stylish-haskell
+    haskellPackages.brittany
   ];
 
   LANG = "en_US.UTF-8";

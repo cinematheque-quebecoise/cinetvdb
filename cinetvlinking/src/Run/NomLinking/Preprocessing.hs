@@ -22,22 +22,32 @@ import System.Random
 type SampleSize = Integer
 type ValidationRatio = Double
 
+nomAnnotatedCsvFile :: FilePath
+nomAnnotatedCsvFile = "Nom_LienWikidata.csv"
+
+-- Read from CineTVExt
+-- select SAMPLESIZE lines. if not enough lines, add to CineTVExt unannotated instances.
+-- Split to validation/test set and write to file
+--
 -- | Read all people data, select sample of SampleSize length from streaming
 -- | records, split into validation and test set and write results to file.
-preprocess :: SampleSize
+preprocess :: FilePath
+           -> SampleSize
            -> ValidationRatio
            -> RIO App ()
-preprocess size validationRatio = do
+preprocess cinetvExtDir size validationRatio = do
 
   logInfo "Creating validation and test datasets..."
 
-  annotatedDataE <- readAnnotatedPeopleData "data/nom-wd-annotation.csv"
+  let nomAnnotatedCsvFpath = cinetvExtDir <> "/" <> nomAnnotatedCsvFile
+  -- annotatedDataE <- readAnnotatedPeopleData "data/nom-wd-annotation.csv"
+  annotatedDataE <- readAnnotatedPeopleData nomAnnotatedCsvFpath
 
   case annotatedDataE of
     Left errMsg -> do
       logError $ display $ Text.pack errMsg
     Right (_, annotatedRecords) ->
-      preprocessRecords size validationRatio annotatedRecords
+      preprocessRecords size validationRatio nomAnnotatedCsvFpath annotatedRecords
 
   return ()
 
@@ -46,15 +56,16 @@ preprocess size validationRatio = do
 preprocessRecords :: (Functor t, Foldable t)
                   => SampleSize
                   -> ValidationRatio
+                  -> FilePath
                   -> t (AnnotatedFeatures PersonFeatures)
                   -> RIO App ()
-preprocessRecords size validationRatio annotatedRecords = do
+preprocessRecords size validationRatio nomAnnotatedCsvFpath annotatedRecords = do
 
   let numAnnotatedInstances = length annotatedRecords
   let numMissingAnnotations = foldr (\p acc ->
-        if output p == ""
-        then acc + 1 :: Int
-        else acc) 0 annotatedRecords
+        if isAnnotated p
+        then acc
+        else acc + 1 :: Int) 0 annotatedRecords
 
   if size > fromIntegral numAnnotatedInstances
   then do
@@ -71,11 +82,11 @@ preprocessRecords size validationRatio annotatedRecords = do
 
     sample <- sampleUnannotatedRecords numToSample annotatedInstancesIds unannotatedData
 
-    annotatedFileExists <- liftIO $ doesFileExist "data/nom-wd-annotation.csv"
+    annotatedFileExists <- liftIO $ doesFileExist nomAnnotatedCsvFpath
 
     if annotatedFileExists
-    then appendDataSetToFile "data/nom-wd-annotation.csv" $ Vector.map fromUnannotated sample
-    else writeDataSetToFile "data/nom-wd-annotation.csv" $ Vector.map fromUnannotated sample
+    then appendDataSetToFile nomAnnotatedCsvFpath $ Vector.map fromUnannotated sample
+    else writeDataSetToFile nomAnnotatedCsvFpath $ Vector.map fromUnannotated sample
     logInfo "Finished sampling unannotated instances. You need to annotated those instances NOW!"
 
   else if numMissingAnnotations > 0

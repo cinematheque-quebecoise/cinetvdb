@@ -35,3 +35,10 @@ Pour exécuter la publication:
 ```
 $ make release token=<COPIER VOTRE JETON ICI>
 ```
+
+## Processus
+
+- Exportez CineTV vers des fichiers au format XLSX dans un dossier `DonnéesCQ_<DATE>` (ex. DonnéesCQ-2019-07-01)
+- Mettez à jour, s'il y a lieu, les variables du fichier `Makefile`.
+- Exécutez la commande `make run` pour générer la base de données SQLite de CineTV
+- Publier les données avec `make release token=<COPIER VOTRE JETON ICI>`

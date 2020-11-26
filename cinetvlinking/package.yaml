@@ -46,7 +46,7 @@ dependencies:
 - foldl
 - filepath
 - unliftio
-- hsparql
+# - hsparql
 
 ghc-options:
 - -Wall

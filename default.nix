@@ -2,8 +2,9 @@
 
 let
   pname = "cinetv2sqlite";
-  cinetv-migration = import ./cinetv-migration { inherit pkgs; };
-  cinetvlinking = import ./cinetvlinking { inherit pkgs; };
+  cinetv2public = import ./cinetv2public/release.nix;
+  # cinetvlinking = import ./cinetvlinking { inherit pkgs; };
+  cinetvlinking = import ./cinetvlinking/release.nix;
 in
   pkgs.stdenv.mkDerivation rec {
     name    = "cinetv2sqlite-${version}";
@@ -26,6 +27,6 @@ in
       cp ${./cinetv2sqlite.py} $out/bin/cinetv2sqlite
       chmod +x $out/bin/cinetv2sqlite
       wrapProgram $out/bin/cinetv2sqlite \
-        --prefix PATH : "${pkgs.python38Packages.csvs-to-sqlite}/bin:${cinetv-migration}/bin:${cinetvlinking}/bin"
+        --prefix PATH : "${pkgs.python38Packages.csvs-to-sqlite}/bin:${cinetv2public}/bin:${cinetvlinking}/bin"
     '';
   }

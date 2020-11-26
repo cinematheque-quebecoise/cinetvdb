@@ -32,7 +32,7 @@ main = do
        <*> strOption ( long "cinetvdb"
                     <> short 'd'
                     <> metavar "CINETVDB"
-                    <> help "File path of the CineTV Sqlite database file"
+                    <> help "File path of the CineTV SQLite database file"
                      )
        <*> strOption ( long "outputdir"
                     <> short 'o'
@@ -64,7 +64,6 @@ main = do
 parseCommand :: Parser Command
 parseCommand = subparser $
      command "nom" ((NomLinking <$> parseNomLinking) `withInfo` "Link Nom table to Wikidata.")
-  <> command "pays" ((pure CountryLinking) `withInfo` "Link Pays table to Wikidata.")
   <> command "filmo" (parseFilmoLinking `withInfo` "Link Filmo table to Wikidata.")
 
 parseNomLinking :: Parser NomLinkingCommand
@@ -76,7 +75,8 @@ parseNomLinking = subparser $
 
 parseNomLinkingPreprocess :: Parser NomLinkingCommand
 parseNomLinkingPreprocess = NomLinkingPreprocess
-    <$> argument auto (metavar "TOTAL_DATA_SIZE")
+    <$> argument str (metavar "CINETV_EXT_DIR")
+    <*> argument auto (metavar "TOTAL_DATA_SIZE")
     <*> argument auto (metavar "VALIDATION_DATA_RATIO")
 
 parseNomLinkingEvaluate :: Parser NomLinkingCommand

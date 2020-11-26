@@ -3,7 +3,6 @@
 module Run (run) where
 
 import Import
-import qualified Run.CountryLinking as CountryLinking
 import qualified Run.FilmoLinking as FilmoLinking
 import qualified Run.NomLinking.Preprocessing as NomLinking
 import qualified Run.NomLinking.Evaluation as NomLinking
@@ -15,12 +14,14 @@ run = do
 
   command <- fmap (optionsCommand . appOptions) ask
   case command of
-     CountryLinking -> CountryLinking.run pool
      FilmoLinking willAnnotateAll -> FilmoLinking.run willAnnotateAll
      NomLinking nomLinkingCmd ->
        case nomLinkingCmd of
-         NomLinkingPreprocess size validationRatio -> NomLinking.preprocess size validationRatio
-         NomLinkingEvaluation isTesting -> NomLinking.applyAlgorithmToAnnotatedData isTesting
-         NomLinkingEvaluationResults isTesting -> NomLinking.evaluateAlgorithm isTesting
-         NomLinkingApply willAnnotateAll -> NomLinking.applyAlgorithm willAnnotateAll
-
+         NomLinkingPreprocess cinetvExtDir size validationRatio ->
+           NomLinking.preprocess cinetvExtDir size validationRatio
+         NomLinkingEvaluation isTesting ->
+           NomLinking.applyAlgorithmToAnnotatedData isTesting
+         NomLinkingEvaluationResults isTesting ->
+           NomLinking.evaluateAlgorithm isTesting
+         NomLinkingApply willAnnotateAll ->
+           NomLinking.applyAlgorithm willAnnotateAll

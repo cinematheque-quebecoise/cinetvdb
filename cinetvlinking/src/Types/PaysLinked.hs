@@ -17,11 +17,11 @@ data PaysLinked = PaysLinked
 
 instance ToNamedRecord PaysLinked where
   toNamedRecord PaysLinked {..} =
-    namedRecord $ [ "PaysId" .= paysLinkedId
-                  , "Terme" .= paysLinkedTerme
-                  , "LienWikidata" .= paysLinkedWdLink
-                  -- , "WdEtiquette" .= paysLinkedWdLabel
-                  ]
+    namedRecord [ "PaysId" .= paysLinkedId
+                , "Terme" .= paysLinkedTerme
+                , "LienWikidata" .= paysLinkedWdLink
+                -- , "WdEtiquette" .= paysLinkedWdLabel
+                ]
 
 instance DefaultOrdered PaysLinked where
     headerOrder _ = header [ "PaysId"
