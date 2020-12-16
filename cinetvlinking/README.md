@@ -134,12 +134,10 @@ cabal build
 cabal run cinetvlinking-exe -- --help
 ```
 
-### Exécution
-
 Plusieurs commandes prédéfinies se trouvent dans le fichier `Makefile`. Par exemple:
 
 ```
-make build
+make build # Pour compiler le projet
 make preprocess
 ```
 
