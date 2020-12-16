@@ -28,7 +28,7 @@ runwithlinking: ${CINETV_XLSX_DIR} ${CINETV_CSV_EXTENSIONS} ${CINETV_CSV_EXTENSI
 # If release tag does not exist on Gitlab server, it returns a 403 Forbidden HTTP code.
 # @param token - Private Gitlab token
 # $ make release
-release: $(DESTDIR)/cinetv-$(DATE)/cinetv-$(DATE)-publique.db ${GITLAB_TOKEN}
+release: $(DESTDIR)/cinetv-$(DATE)/cinetv-$(DATE)-publique.db .gitlab-token
 	./upload-release.sh \
 		"cinetvdb v$(VERSION)" \
 		"v$(VERSION)" \
