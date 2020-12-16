@@ -8,7 +8,7 @@ let
 in
   pkgs.stdenv.mkDerivation rec {
     name    = "cinetv2sqlite-${version}";
-    version = "0.1";
+    version = "0.1.0";
 
     buildInputs = [
       (pkgs.python38.withPackages (pythonPackages: with pythonPackages; [
