@@ -1,6 +1,4 @@
 {-# LANGUAGE NoImplicitPrelude #-}
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecordWildCards #-}
 module Types where
 
 import RIO
@@ -18,6 +16,7 @@ data NomLinkingCommand = NomLinkingPreprocess !FilePath !Integer !Double
                        | NomLinkingEvaluation !Bool
                        | NomLinkingEvaluationResults !Bool
                        | NomLinkingApply !Bool
+                       | NomLinkingInteractive
 
 -- | Command line arguments
 data Options = Options

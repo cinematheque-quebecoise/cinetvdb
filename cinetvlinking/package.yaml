@@ -46,6 +46,9 @@ dependencies:
 - foldl
 - filepath
 - unliftio
+- aeson
+- http-client-tls
+- mtl
 # - hsparql
 
 ghc-options:

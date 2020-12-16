@@ -7,9 +7,20 @@ module Run.NomLinking.Evaluation
   )
 where
 
+import           Import                           hiding
+                                                   (NomLinkingCommand (..))
+-- import           Run.NomLinking.Algorithm         (runAlgorithm)
+import           EntityLinking.Nom.Wikidata       (LinkedPerson (..), linkNomId)
+import           Types.AlgorithmResult            (AlgorithmResult (..),
+                                                   readAlgorithmTrainResults)
+import           Types.AnnotatedFeatures
+import           Types.PersonFeatures
+import           Types.Resource                   (ResourceUri (..))
+
 import qualified Data.ByteString.Lazy             as BL
 import           Data.Csv                         (EncodeOptions (..),
-                                                   defaultEncodeOptions, headerOrder)
+                                                   defaultEncodeOptions,
+                                                   headerOrder)
 import           Data.Csv.Incremental             (encodeDefaultOrderedByNameWith,
                                                    encodeNamedRecord)
 import           Data.Csv.Streaming               (Records)
@@ -22,16 +33,9 @@ import qualified Data.Text.Lazy                   as Text (toStrict)
 import qualified Data.Text.Lazy.Builder           as Text
 import qualified Data.Text.Lazy.Builder.Int       as Text
 import qualified Data.Text.Lazy.Builder.RealFloat as Text
-import           Import                           hiding
-                                                   (NomLinkingCommand (..))
-import           Run.NomLinking.Algorithm         (runAlgorithm)
 import           Text.Tabl                        (Alignment (..),
                                                    Decoration (..),
                                                    Environment (EnvAscii), tabl)
-import           Types.AlgorithmResult            (AlgorithmResult (..),
-                                                   readAlgorithmTrainResults)
-import           Types.AnnotatedFeatures
-import           Types.PersonFeatures
 
 type IsTestingMode = Bool
 
@@ -147,19 +151,20 @@ combineResults
   :: AlgorithmResult (AnnotatedFeatures PersonFeatures)
   -> MonoidalMap Text EvaluationResults
   -> MonoidalMap Text EvaluationResults
-combineResults result acc = if actualValue == "NA" && algoValue == "NA"
-  then acc <> MMap.fromList [("NA", EvaluationResults 1 0 0)]
-  else if actualValue == "NA" && algoValue /= "NA"
-    then acc <> MMap.fromList [("NA", EvaluationResults 0 0 1)] <> MMap.fromList
-      [("Q*", EvaluationResults 0 1 0)]
-    else if actualValue /= "NA" && algoValue == "NA"
-      then
-        acc <> MMap.fromList [("NA", EvaluationResults 0 1 0)] <> MMap.fromList
-          [("Q*", EvaluationResults 0 0 1)]
-      else
-        if actualValue == algoValue && actualValue /= "NA" && algoValue /= "NA"
-          then acc <> MMap.fromList [("Q*", EvaluationResults 1 0 0)]
-          else acc <> MMap.fromList [("Q*", EvaluationResults 0 1 1)]
+combineResults result acc
+  | actualValue == "" && algoValue == ""
+  = acc <> MMap.fromList [("NA", EvaluationResults 1 0 0)]
+  | actualValue == "" && algoValue /= ""
+  = acc <> MMap.fromList [("NA", EvaluationResults 0 0 1)] <> MMap.fromList
+    [("Q*", EvaluationResults 0 1 0)]
+  | actualValue /= "" && algoValue == ""
+  = acc <> MMap.fromList [("NA", EvaluationResults 0 1 0)] <> MMap.fromList
+    [("Q*", EvaluationResults 0 0 1)]
+  | actualValue == algoValue && actualValue /= "" && algoValue /= ""
+  = acc <> MMap.fromList [("Q*", EvaluationResults 1 0 0)]
+  | otherwise
+  = acc <> MMap.fromList [("Q*", EvaluationResults 0 1 1)]
+
  where
   actualValue = output $ input result
   algoValue   = predictedValue result
@@ -173,11 +178,11 @@ tableEvaluationResults :: Map Text EvaluationResults -> Text
 tableEvaluationResults results = tabl EnvAscii
                                       DecorNone
                                       DecorNone
-                                      (map (\_ -> AlignCentre) headers)
+                                      (map (const AlignCentre) headers)
                                       ([headers] <> getTextRows results)
  where
   headers     = ["Class", "TP", "FP", "FN", "Precision", "Recall", "F1"]
-  getTextRows = (map getTableRow . Map.toList)
+  getTextRows = map getTableRow . Map.toList
 
 getTableRow :: (Text, EvaluationResults) -> [Text]
 getTableRow (cls, result) =
@@ -185,12 +190,12 @@ getTableRow (cls, result) =
       recall    = calcRecall result
       f1        = calcF1 precision recall
   in  [ cls
-      , intToText $ tp $ result
-      , intToText $ fp $ result
-      , intToText $ fn $ result
-      , realFloatToText $ precision
-      , realFloatToText $ recall
-      , realFloatToText $ f1
+      , intToText $ tp result
+      , intToText $ fp result
+      , intToText $ fn result
+      , realFloatToText precision
+      , realFloatToText recall
+      , realFloatToText f1
       ]
 
  where
@@ -244,23 +249,23 @@ saveEvaluationResults
   -> Records (AnnotatedFeatures PersonFeatures)
   -> RIO env ()
 saveEvaluationResults fpath records = do
-  let headerLine = Text.intercalate ","
-                 $ fmap (decodeUtf8With (\_ _ -> Nothing))
-                 $ toList
-                 $ headerOrder (undefined :: AlgorithmResult (AnnotatedFeatures PersonFeatures))
+  let headerLine =
+        Text.intercalate ","
+          $ fmap (decodeUtf8With (\_ _ -> Nothing))
+          $ toList
+          $ headerOrder
+              (undefined :: AlgorithmResult (AnnotatedFeatures PersonFeatures))
   writeFileUtf8 fpath $ headerLine <> "\r\n"
 
-  pooledForConcurrently_ records $ \r -> do
-    predictedMaybe <- runAlgorithm (features r)
-    let wikidataEntityUri = "http://www.wikidata.org/entity/"
-    let personOutput =
-          case predictedMaybe of
-            Just predicted ->
-              let qid = Text.replace wikidataEntityUri "" predicted
-              in  AlgorithmResult r qid
-            Nothing -> AlgorithmResult r "NA"
+  withFile fpath AppendMode $ \h -> pooledForConcurrently_ records $ \r -> do
+    linkedPersonE <- linkNomId (personId $ features r)
+    let personOutput = case linkedPersonE of
+          Right linkedPerson ->
+            AlgorithmResult r (unResourceUri $ linkedPersonUri linkedPerson)
+          Left _ -> AlgorithmResult r ""
 
     let result = encodeDefaultOrderedByNameWith myOptions
           $ encodeNamedRecord personOutput
-    liftIO $ BL.appendFile fpath result
+    -- liftIO $ BL.appendFile fpath result
+    liftIO $ BL.hPut h result
   where myOptions = defaultEncodeOptions { encIncludeHeader = False }

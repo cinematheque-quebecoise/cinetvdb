@@ -72,6 +72,7 @@ parseNomLinking = subparser $
   <> command "evaluate" (parseNomLinkingEvaluate `withInfo` "Apply algorithm on annotated dataset.")
   <> command "evaluate-result" (parseNomLinkingEvaluateResult `withInfo` "Evaluate algorithm on generated dataset.")
   <> command "apply" (parseNomLinkingApply `withInfo` "Apply algorithm on unannotated dataset.")
+  <> command "interactive" (parseNomLinkingInteractive `withInfo` "Apply algorithm interactively.")
 
 parseNomLinkingPreprocess :: Parser NomLinkingCommand
 parseNomLinkingPreprocess = NomLinkingPreprocess
@@ -99,6 +100,9 @@ parseNomLinkingApply = NomLinkingApply
             <> short 'r'
             <> help "Algorithm application on ALL data (even if already annotated)"
              )
+
+parseNomLinkingInteractive :: Parser NomLinkingCommand
+parseNomLinkingInteractive = pure NomLinkingInteractive
 
 parseFilmoLinking :: Parser Command
 parseFilmoLinking = FilmoLinking

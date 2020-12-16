@@ -4,10 +4,14 @@
 module Run.NomLinking.Apply (applyAlgorithm) where
 
 import Import
-import Run.NomLinking.Algorithm (runAlgorithm)
+-- import Run.NomLinking.Algorithm (runAlgorithm)
+import           EntityLinking.Nom.Wikidata         (LinkedPerson(..), linkNomId)
 import Types.AlgorithmResult (AlgorithmResult(..), readAlgorithmResults)
 import Types.PersonFeatures
-import Run.NomLinking.Model (getPersonFeatures, selectNomLienWikidataIds)
+import Database.CineTV (MonadGetPersonFeatures(..), MonadGetPersonLinkedIds(..))
+-- import Run.NomLinking.Model (selectNomLienWikidataIds)
+import           Types.Resource                           (ResourceUri (..))
+
 import qualified Data.ByteString.Lazy as BL
 import           Database.Esqueleto (fromSqlKey)
 import qualified Data.Set as Set
@@ -18,6 +22,7 @@ import qualified Data.Text as Text
 import System.FilePath (joinPath)
 import System.IO.Error (isDoesNotExistError)
 import System.Directory (doesFileExist)
+import qualified Data.Either as E
 
 -- import qualified Data.Text as Text
 -- import qualified Data.Text.IO as Text
@@ -42,8 +47,6 @@ applyAlgorithm willAnnotateAll = do
 
   outputdir <- fmap (optionsOutputDir . appOptions) ask
 
-  pool <- getDbPool <$> ask
-
   -- get manually annotated data (SQLite db)
   -- get automatically classified data (CSV file)
   -- get all data (from SQLite db)
@@ -51,10 +54,10 @@ applyAlgorithm willAnnotateAll = do
   -- then dataToAnnotate = all data - manually annotated data
   -- else dataToAnnotate = all data - manually annotated data - automatically classified data
 
-  manuallyAnnotatedPersonKeys <- selectNomLienWikidataIds pool
+  manuallyAnnotatedPersonKeys <- getPersonLinkedIds
   let manuallyAnnotatedPersonIds = Set.fromList $ fromSqlKey <$> manuallyAnnotatedPersonKeys
 
-  allPersonFeatures <- liftIO $ getPersonFeatures pool
+  allPersonFeatures <- getPersonFeatures
 
   let fpath = joinPath [outputdir, "Nom_LienWikidata.csv"]
 
@@ -68,8 +71,8 @@ applyAlgorithm willAnnotateAll = do
   let autoAnnotatedPersons = either (const []) id e
 
   let filteredAutoAnnotatedPersons = filter (\p -> Set.notMember (personId $ input p) manuallyAnnotatedPersonIds) autoAnnotatedPersons
-  let filteredAutoAnnotatedPersonIds = Set.fromList $ (personId . input) <$> filteredAutoAnnotatedPersons
-  when (length autoAnnotatedPersons > 0) $ do
+  let filteredAutoAnnotatedPersonIds = Set.fromList $ personId . input <$> filteredAutoAnnotatedPersons
+  when (null autoAnnotatedPersons) $ do
     let header = headerOrder (undefined :: AlgorithmResult PersonFeatures)
     liftIO $ BL.writeFile fpath $ encodeByName header filteredAutoAnnotatedPersons
 
@@ -128,25 +131,32 @@ savePredictedOutputOfPersonFeatures :: (HasLogFunc env, HasDbPool env)
                                     -> RIO env ()
 savePredictedOutputOfPersonFeatures fpath dataToAnnotate =
   withFile fpath AppendMode $ \h ->
-    pooledForConcurrently_ dataToAnnotate $ \personFeatures -> do
-      personOutput <- predictPersonFeaturesOutput personFeatures
-      let result = encodeDefaultOrderedByNameWith myOptions $ encodeNamedRecord personOutput
-      liftIO $ BL.hPut h result
+    pooledForConcurrently_ dataToAnnotate $ \personFeatures ->
+
+      handle (errorHandler personFeatures) $ do
+        personOutput <- predictPersonFeaturesOutput personFeatures
+        let result = encodeDefaultOrderedByNameWith myOptions $ encodeNamedRecord personOutput
+        liftIO $ BL.hPut h result
       -- liftIO $ BL.appendFile fpath result
 
   where
+    errorHandler personFeatures (SomeException e) = do
+      logWarn $ display $ "Runtime error when linking " <> Text.pack (show $ personId personFeatures)
+      logWarn $ displayShow e
+
     myOptions = defaultEncodeOptions { encIncludeHeader = False }
 
 predictPersonFeaturesOutput :: (HasLogFunc env, HasDbPool env)
                             => PersonFeatures
                             -> RIO env (AlgorithmResult PersonFeatures)
 predictPersonFeaturesOutput personFeatures = do
-  predictedValue <- fromMaybe "NA" <$> runAlgorithm personFeatures
+  linkedPersonE <- linkNomId (personId personFeatures)
+  let predictedPersonUri = E.fromRight "NA" $ unResourceUri . linkedPersonUri <$> linkedPersonE
   logInfo $ display $ "Linking NomID "
                    <> (Text.pack . show . personId) personFeatures
                    <> " to "
-                   <> predictedValue
-  return $ AlgorithmResult personFeatures predictedValue
+                   <> predictedPersonUri
+  return $ AlgorithmResult personFeatures predictedPersonUri
 
 recordsToList :: Records a -> [a]
 recordsToList = foldr (\p acc -> mconcat [[p], acc]) []

@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: c129b67a4d4fb8e9d14a35046a1eed90396e738e9298f04cb08dcdaafb6f88ba
+-- hash: ddb6fc521f4c40e659d1fcb735f7dd17653ee0d9d32168cfdc5e55730d20c298
 
 name:           cinetvlinking
 version:        0.1.0.0
@@ -27,13 +27,16 @@ source-repository head
 library
   exposed-modules:
       Data.List.Extended
+      Database.CineTV
+      Database.SPARQL.Protocol.Client.Extended
+      EntityLinking.Fonction.Wikidata
+      EntityLinking.Nom.Wikidata
       Import
       Run
       Run.FilmoLinking
-      Run.NomLinking.Algorithm
       Run.NomLinking.Apply
       Run.NomLinking.Evaluation
-      Run.NomLinking.Model
+      Run.NomLinking.Interactive
       Run.NomLinking.Model.Wikidata
       Run.NomLinking.Preprocessing
       Types
@@ -42,6 +45,7 @@ library
       Types.FilmoLinked
       Types.PaysLinked
       Types.PersonFeatures
+      Types.Resource
       Util
   other-modules:
       Paths_cinetvlinking
@@ -49,7 +53,8 @@ library
       src
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
   build-depends:
-      base >=4.11 && <10
+      aeson
+    , base >=4.11 && <10
     , bytestring >=0.10 && <0.11
     , cassava >=0.5 && <0.6
     , cinetv4h
@@ -59,9 +64,10 @@ library
     , esqueleto >=3 && <3.4
     , filepath
     , foldl
-    , hsparql
     , http-client >=0.6 && <0.7
+    , http-client-tls
     , monoidal-containers
+    , mtl
     , neat-interpolation
     , persistent
     , persistent-sqlite
@@ -69,6 +75,7 @@ library
     , resource-pool
     , rio >=0.1.12.0
     , sparql-protocol
+    , split
     , tabl
     , text >=1.2 && <1.3
     , text-icu
@@ -86,7 +93,8 @@ executable cinetvlinking-exe
       app
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.11 && <10
+      aeson
+    , base >=4.11 && <10
     , bytestring >=0.10 && <0.11
     , cassava >=0.5 && <0.6
     , cinetv4h
@@ -97,9 +105,10 @@ executable cinetvlinking-exe
     , esqueleto >=3 && <3.4
     , filepath
     , foldl
-    , hsparql
     , http-client >=0.6 && <0.7
+    , http-client-tls
     , monoidal-containers
+    , mtl
     , neat-interpolation
     , optparse-simple
     , persistent
@@ -108,6 +117,7 @@ executable cinetvlinking-exe
     , resource-pool
     , rio >=0.1.12.0
     , sparql-protocol
+    , split
     , tabl
     , text >=1.2 && <1.3
     , text-icu
@@ -126,7 +136,8 @@ test-suite cinetvlinking-test
       test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.11 && <10
+      aeson
+    , base >=4.11 && <10
     , bytestring >=0.10 && <0.11
     , cassava >=0.5 && <0.6
     , cinetv4h
@@ -137,10 +148,11 @@ test-suite cinetvlinking-test
     , esqueleto >=3 && <3.4
     , filepath
     , foldl
-    , hsparql
     , hspec
     , http-client >=0.6 && <0.7
+    , http-client-tls
     , monoidal-containers
+    , mtl
     , neat-interpolation
     , persistent
     , persistent-sqlite
@@ -148,6 +160,7 @@ test-suite cinetvlinking-test
     , resource-pool
     , rio >=0.1.12.0
     , sparql-protocol
+    , split
     , tabl
     , text >=1.2 && <1.3
     , text-icu
