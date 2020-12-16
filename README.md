@@ -31,7 +31,7 @@ Pour exécuter la migration:
 $ make run
 ```
 
-Vous pouvez aussi appliquer l'algorithme de désambiguïsation d'entités de CineTV automatiquement. Il faut spécifier le chemin qui va contenir les entités désambuïsées dans la variable `CINETV_CSV_EXTENSIONS_AUTO` du `Makefile`.
+Vous pouvez aussi appliquer l'algorithme de désambiguïsation d'entités de CineTV automatiquement. Il faut spécifier le chemin qui va contenir les entités désambiguïsées dans la variable `CINETV_CSV_EXTENSIONS_AUTO` du `Makefile`.
 
 ```
 $ make runwithlinking
