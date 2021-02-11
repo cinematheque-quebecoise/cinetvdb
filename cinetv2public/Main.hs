@@ -4,8 +4,9 @@
 import           Control.Monad.IO.Class       (MonadIO (..))
 import           Data.Pool                    (Pool)
 import           Data.Text                    (Text)
-import qualified Data.Text                    as Text
-import qualified Data.Text.IO                 as Text
+import qualified Data.Text                    as T
+import qualified Data.List as L
+import qualified Data.Text.IO                 as T
 import           Database.CineTv.Public.Model
 import           Database.Esqueleto           hiding (get)
 import           Database.Persist.Sqlite      (SqliteConf (..))
@@ -16,6 +17,7 @@ import           System.Exit                  (exitFailure)
 import           System.FilePath              (joinPath)
 import           Text.RE.TDFA.Text
 import           UnliftIO.Exception           (tryIO)
+import Data.Maybe (catMaybes)
 
 patterns :: Docopt
 patterns = [docopt|
@@ -40,7 +42,7 @@ main = do
   sqliteDbPath <- args `getArgOrExit` shortOption 's'
   outputDir    <- args `getArgOrExit` shortOption 'd'
 
-  runCineTvMigration (Text.pack sqliteDbPath) (Text.pack outputDir)
+  runCineTvMigration (T.pack sqliteDbPath) (T.pack outputDir)
 
 runCineTvMigration
   :: Text -- ^ CineTV SQLite database path
@@ -50,12 +52,12 @@ runCineTvMigration sqliteDbPath outputDir =
   case matchedText $ sqliteDbPath ?=~ [re|[0-9]+-[0-9]+-[0-9]+|] of
     Just date -> do
       let newSqliteDbFname = "cinetv-" <> date <> "-publique.db"
-      let newSqliteDbPath = (Text.pack . joinPath . fmap Text.unpack)
+      let newSqliteDbPath = (T.pack . joinPath . fmap T.unpack)
             [outputDir, newSqliteDbFname]
 
       removeOldDatabase newSqliteDbPath
 
-      Text.putStrLn
+      T.putStrLn
         $  "Migrating SQLite database "
         <> sqliteDbPath
         <> " to "
@@ -71,7 +73,7 @@ removeOldDatabase
   => Text -- ^ New SQLite database path
   -> m ()
 removeOldDatabase newSqliteDbPath = do
-  _ <- liftIO $ tryIO $ removeFile $ Text.unpack newSqliteDbPath
+  _ <- liftIO $ tryIO $ removeFile $ T.unpack newSqliteDbPath
   return ()
 
 migrateDatabase
@@ -138,61 +140,65 @@ migrateDatabase sqliteDbPath newSqliteDbPath = do
   filmoTitres <- liftIO $ getFilmoTitres ipool
   liftIO $ putStrLn "Fetching FilmoDureesOriginales table..."
   filmoDureesOriginales <- liftIO $ getFilmoDureesOriginales ipool
+  liftIO $ putStrLn "Fetching NatureDeLaProduction table..."
+  natureDeLaProduction <- liftIO $ getNatureDeLaProduction ipool
 
   flip liftSqlPersistMPool opool $ do
-    -- liftIO $ Text.putStrLn "Writing Film entities to database..."
+    -- liftIO $ T.putStrLn "Writing Film entities to database..."
     -- mapM_ (\c -> insertKey (entityKey c) (entityVal c)) film
-    liftIO $ Text.putStrLn "Writing Filmo entities to database..."
+    liftIO $ T.putStrLn "Writing NatureDeLaProduction entities to database..."
+    mapM_ (\c -> insertKey (entityKey c) (entityVal c)) natureDeLaProduction
+    liftIO $ T.putStrLn "Writing Filmo entities to database..."
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) filmo
-    liftIO $ Text.putStrLn "Writing Nom entities to database..."
+    liftIO $ T.putStrLn "Writing Nom entities to database..."
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) nom
-    liftIO $ Text.putStrLn "Writing Sujet entities to database..."
+    liftIO $ T.putStrLn "Writing Sujet entities to database..."
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) sujet
-    liftIO $ Text.putStrLn "Writing Pays entities to database..."
+    liftIO $ T.putStrLn "Writing Pays entities to database..."
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) pays
-    liftIO $ Text.putStrLn "Writing Fonction entities to database..."
+    liftIO $ T.putStrLn "Writing Fonction entities to database..."
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) fonction
-    liftIO $ Text.putStrLn "Writing Langue entities to database..."
+    liftIO $ T.putStrLn "Writing Langue entities to database..."
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) langue
-    -- liftIO $ Text.putStrLn "Writing Film_Filmo entities to database..."
+    -- liftIO $ T.putStrLn "Writing Film_Filmo entities to database..."
     -- mapM_ (\c -> insertKey (entityKey c) (entityVal c)) filmFilmo
-    liftIO $ Text.putStrLn "Writing Film_Realisation entities to database..."
+    liftIO $ T.putStrLn "Writing Filmo_Realisation entities to database..."
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) filmoRealisation
-    liftIO $ Text.putStrLn "Writing Filmo_LienWikidata entities to database..."
+    liftIO $ T.putStrLn "Writing Filmo_LienWikidata entities to database..."
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) filmoLienWikidata
-    liftIO $ Text.putStrLn "Writing Nom_LienWikidata entities to database..."
+    liftIO $ T.putStrLn "Writing Nom_LienWikidata entities to database..."
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) nomLienWikidata
-    liftIO $ Text.putStrLn "Writing Filmo_Pays entities to database..."
+    liftIO $ T.putStrLn "Writing Filmo_Pays entities to database..."
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) filmoPays
-    liftIO $ Text.putStrLn "Writing Pays_LienWikidata entities to database..."
+    liftIO $ T.putStrLn "Writing Pays_LienWikidata entities to database..."
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) paysLienWikidata
     liftIO
-      $ Text.putStrLn "Writing Filmo_GenresCategories entities to database..."
+      $ T.putStrLn "Writing Filmo_GenresCategories entities to database..."
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) filmoGenresCategories
-    liftIO $ Text.putStrLn
+    liftIO $ T.putStrLn
       "Writing GenresCategories_LienWikidata entities to database..."
     mapM_ (\c -> insertKey (entityKey c) (entityVal c))
           genresCategoriesLienWikidata
-    -- liftIO $ Text.putStrLn "Writing Fonction_LienWikidata entities to database..."
+    -- liftIO $ T.putStrLn "Writing Fonction_LienWikidata entities to database..."
     -- mapM_ (\c -> insertKey (entityKey c) (entityVal c)) fonctionLienWikidata
-    liftIO $ Text.putStrLn "Writing Filmo_Generique entities to database..."
+    liftIO $ T.putStrLn "Writing Filmo_Generique entities to database..."
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) filmoGenerique
-    liftIO $ Text.putStrLn "Writing Filmo_Resumes entities to database..."
+    liftIO $ T.putStrLn "Writing Filmo_Resumes entities to database..."
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) filmoResumeEntities
     liftIO
-      $ Text.putStrLn "Writing Filmo_ResumesAnglais entities to database..."
+      $ T.putStrLn "Writing Filmo_ResumesAnglais entities to database..."
     mapM_ (\c -> insertKey (entityKey c) (entityVal c))
           filmoResumeAnglaisEntities
-    liftIO $ Text.putStrLn "Writing Filmo_Langue entities to database..."
+    liftIO $ T.putStrLn "Writing Filmo_Langue entities to database..."
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) filmoLangue
-    liftIO $ Text.putStrLn "Writing Langue_LienWikidata entities to database..."
+    liftIO $ T.putStrLn "Writing Langue_LienWikidata entities to database..."
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) langueLienWikidata
-    liftIO $ Text.putStrLn "Writing TypeTitre entities to database..."
+    liftIO $ T.putStrLn "Writing TypeTitre entities to database..."
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) typeTitre
-    liftIO $ Text.putStrLn "Writing FilmoTitres entities to database..."
+    liftIO $ T.putStrLn "Writing FilmoTitres entities to database..."
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) filmoTitres
     liftIO
-      $ Text.putStrLn "Writing FilmoDureesOriginales entities to database..."
+      $ T.putStrLn "Writing FilmoDureesOriginales entities to database..."
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) filmoDureesOriginales
 
     -- runConduit $ selectSource (distinct $ from $ \film_filmo -> return film_filmo)
@@ -220,7 +226,7 @@ migrateDatabase sqliteDbPath newSqliteDbPath = do
 -- printT :: (Monad m, MonadIO m)
 --        => Pool SqlBackend
 --        -> ConduitT Pays Void m ()
--- printT pool = CL.mapM_ (liftIO . Text.putStrLn . paysTerme)
+-- printT pool = CL.mapM_ (liftIO . T.putStrLn . paysTerme)
 
 -- savePays :: (Monad m, MonadIO m)
 --          => Pool SqlBackend
@@ -291,8 +297,26 @@ migrateDatabase sqliteDbPath newSqliteDbPath = do
 --         return filmFilmo
 
 getNom :: Pool SqlBackend -> IO [Entity Nom]
-getNom pool =
-  liftIO $ flip runSqlPersistMPool pool $ select $ distinct $ from return
+getNom pool = do
+  nomEntitiesGenerique <-
+    liftIO
+      $ flip liftSqlPersistMPool pool
+      $ select
+      $ distinct
+      $ from
+      $ \(filmoGenerique, nom) -> do
+          where_ (   nom ?.  NomId ==. filmoGenerique ^.  Filmo_GeneriqueNomId)
+          return nom
+  nomEntitiesRealisation <-
+    liftIO
+      $ flip liftSqlPersistMPool pool
+      $ select
+      $ distinct
+      $ from
+      $ \(filmoRealisation, nom) -> do
+          where_ ( nom ?.  NomId ==. filmoRealisation ?.  Filmo_RealisationNomId)
+          return nom
+  return $ L.nub $ catMaybes (nomEntitiesGenerique ++ nomEntitiesRealisation)
 
 getPays :: Pool SqlBackend -> IO [Entity Pays]
 getPays pool =
@@ -342,15 +366,27 @@ getFilmoRealisation pool =
         return filmoRealisation
 
 getNomLienWikidata :: Pool SqlBackend -> IO [Entity Nom_LienWikidata]
-getNomLienWikidata pool =
-  liftIO
-    $ flip runSqlPersistMPool pool
-    $ select
-    $ distinct
-    $ from
-    $ \(nom, nomLienWikidata) -> do
-        where_ $ nomLienWikidata ^. Nom_LienWikidataNomId ==. nom ^. NomId
-        return nomLienWikidata
+getNomLienWikidata pool = do
+  nomLienWikidataEntitiesGenerique <-
+    liftIO
+      $ flip liftSqlPersistMPool pool
+      $ select
+      $ distinct
+      $ from
+      $ \(filmoGenerique, nomLienWikidata) -> do
+          where_ (   nomLienWikidata ?.  Nom_LienWikidataNomId ==. filmoGenerique ^.  Filmo_GeneriqueNomId)
+          return nomLienWikidata
+  nomLienWikidataEntitiesRealisation <-
+    liftIO
+      $ flip liftSqlPersistMPool pool
+      $ select
+      $ distinct
+      $ from
+      $ \(filmoRealisation, nomLienWikidata) -> do
+          where_ ( nomLienWikidata ?.  Nom_LienWikidataNomId ==. filmoRealisation ?.  Filmo_RealisationNomId)
+          return nomLienWikidata
+
+  return $ L.nub $ catMaybes (nomLienWikidataEntitiesGenerique ++ nomLienWikidataEntitiesRealisation)
 
 getFilmoPays :: Pool SqlBackend -> IO [Entity Filmo_Pays]
 getFilmoPays pool =
@@ -527,4 +563,8 @@ getFilmoDureesOriginales pool =
           $   (filmoDureesOriginales ^.  FilmoDureesOriginalesFilmoId)
           ==. (filmo ^.  FilmoId)
         return filmoDureesOriginales
+
+getNatureDeLaProduction :: Pool SqlBackend -> IO [Entity NatureDeLaProduction]
+getNatureDeLaProduction pool =
+  liftIO $ flip runSqlPersistMPool pool $ select $ distinct $ from return
 

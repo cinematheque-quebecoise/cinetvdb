@@ -72,7 +72,9 @@ applyAlgorithm willAnnotateAll = do
 
   let filteredAutoAnnotatedPersons = filter (\p -> Set.notMember (personId $ input p) manuallyAnnotatedPersonIds) autoAnnotatedPersons
   let filteredAutoAnnotatedPersonIds = Set.fromList $ personId . input <$> filteredAutoAnnotatedPersons
-  when (null autoAnnotatedPersons) $ do
+
+  -- Remove already annotated data from Nom_LienWikidata.csv
+  when (length autoAnnotatedPersons /= length filteredAutoAnnotatedPersons) $ do
     let header = headerOrder (undefined :: AlgorithmResult PersonFeatures)
     liftIO $ BL.writeFile fpath $ encodeByName header filteredAutoAnnotatedPersons
 
