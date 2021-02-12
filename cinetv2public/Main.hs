@@ -142,6 +142,10 @@ migrateDatabase sqliteDbPath newSqliteDbPath = do
   filmoDureesOriginales <- liftIO $ getFilmoDureesOriginales ipool
   liftIO $ putStrLn "Fetching NatureDeLaProduction table..."
   natureDeLaProduction <- liftIO $ getNatureDeLaProduction ipool
+  liftIO $ putStrLn "Fetching FilmoDureesEpisodes table..."
+  filmoDureesEpisodes <- liftIO $ getFilmoDureesEpisodes ipool
+  liftIO $ putStrLn "Fetching FilmoNombresEpisodes table..."
+  filmoNombresEpisodes <- liftIO $ getFilmoNombresEpisodes ipool
 
   flip liftSqlPersistMPool opool $ do
     -- liftIO $ T.putStrLn "Writing Film entities to database..."
@@ -200,6 +204,12 @@ migrateDatabase sqliteDbPath newSqliteDbPath = do
     liftIO
       $ T.putStrLn "Writing FilmoDureesOriginales entities to database..."
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) filmoDureesOriginales
+    liftIO
+      $ T.putStrLn "Writing FilmoDureesEpisodes entities to database..."
+    mapM_ (\c -> insertKey (entityKey c) (entityVal c)) filmoDureesEpisodes
+    liftIO
+      $ T.putStrLn "Writing FilmoNombresEpisodes entities to database..."
+    mapM_ (\c -> insertKey (entityKey c) (entityVal c)) filmoNombresEpisodes
 
     -- runConduit $ selectSource (distinct $ from $ \film_filmo -> return film_filmo)
     --           .| (CL.mapM_ (\(e :: Entity Pays) -> insertKey (entityKey e) (entityVal e)))
@@ -566,5 +576,13 @@ getFilmoDureesOriginales pool =
 
 getNatureDeLaProduction :: Pool SqlBackend -> IO [Entity NatureDeLaProduction]
 getNatureDeLaProduction pool =
+  liftIO $ flip runSqlPersistMPool pool $ select $ distinct $ from return
+
+getFilmoDureesEpisodes :: Pool SqlBackend -> IO [Entity FilmoDureesEpisodes]
+getFilmoDureesEpisodes pool =
+  liftIO $ flip runSqlPersistMPool pool $ select $ distinct $ from return
+
+getFilmoNombresEpisodes :: Pool SqlBackend -> IO [Entity FilmoNombresEpisodes]
+getFilmoNombresEpisodes pool =
   liftIO $ flip runSqlPersistMPool pool $ select $ distinct $ from return
 

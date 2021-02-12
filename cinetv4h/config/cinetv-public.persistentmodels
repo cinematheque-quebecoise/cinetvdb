@@ -129,6 +129,12 @@ FilmoDureesEpisodes
   secondes Int
   deriving Eq Show
 
+FilmoNombresEpisodes
+  Id sql=NombresEpisodesID
+  filmoId FilmoId
+  nombreEpisodes Int
+  deriving Eq Show
+
 Langue
   Id sql=LangueId
   terme Text
