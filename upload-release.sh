@@ -6,7 +6,7 @@ PROJECT_ID="$3"
 # DESCRIPTION_FILE_PATH="$4"
 DESCRIPTION="$4"
 PRIVATE_TOKEN="$5"
-ASSET="$6"
+ASSETS="${@:6}"
 
 if [ "$6" == "" ]; then
     echo "Missing parameter! Parameters are RELEASE_NAME, TAG_NAME, PROJECT_ID, DESCRIPTION, PRIVATE_TOKEN and ASSET.";
@@ -14,7 +14,6 @@ if [ "$6" == "" ]; then
 fi
 
 # DESCRIPTION=''
-
 # # Load data from file
 # while read -r line; do
 #     DESCRIPTION="${DESCRIPTION}${line}\n";
@@ -44,30 +43,29 @@ if [[ ${res} != *"HTTP/2 201"* ]]; then
     exit 1;
 fi
 
-# Upload asset
-compressed_asset="${ASSET}.gz"
-gzip -qc ${ASSET} > ${compressed_asset}
-res=$(curl -is \
-        --request POST \
-        --header "PRIVATE-TOKEN: ${PRIVATE_TOKEN}" \
-        --form "file=@${compressed_asset}" \
-        "https://gitlab.com/api/v4/projects/${PROJECT_ID}/uploads")
+# Upload assets
+for asset in ${ASSETS}
+do
+  res=$(curl -is \
+          --request POST \
+          --header "PRIVATE-TOKEN: ${PRIVATE_TOKEN}" \
+          --form "file=@${asset}" \
+          "https://gitlab.com/api/v4/projects/${PROJECT_ID}/uploads")
 
-full_path=$(grep {*} <<< ${res} | jq '.full_path' | sed "s/\"\(.*\)\"/\1/")
-alt=$(grep {*} <<< ${res} | jq '.alt' | sed "s/\"\(.*\)\"/\1/")
+  full_path=$(grep {*} <<< ${res} | jq '.full_path' | sed "s/\"\(.*\)\"/\1/")
+  alt=$(grep {*} <<< ${res} | jq '.alt' | sed "s/\"\(.*\)\"/\1/")
 
-if [[ ${res} != *"HTTP/2 201"* ]]; then
-    echo "Error: $(grep {*} <<< ${res})";
-    exit 1;
-fi
+  if [[ ${res} != *"HTTP/2 201"* ]]; then
+      echo "Error: $(grep {*} <<< ${res})";
+      exit 1;
+  fi
 
-# Link asset to release
-curl -s \
-     -o /dev/null \
-     --request POST \
-     --header "PRIVATE-TOKEN: ${PRIVATE_TOKEN}" \
-     --data name="${alt}" \
-     --data url="http://gitlab.com${full_path}" \
-     "https://gitlab.com/api/v4/projects/${PROJECT_ID}/releases/${TAG_NAME}/assets/links"
-
-echo
+  # Link asset to release
+  curl -s \
+       -o /dev/null \
+       --request POST \
+       --header "PRIVATE-TOKEN: ${PRIVATE_TOKEN}" \
+       --data name="${alt}" \
+       --data url="http://gitlab.com${full_path}" \
+       "https://gitlab.com/api/v4/projects/${PROJECT_ID}/releases/${TAG_NAME}/assets/links"
+done

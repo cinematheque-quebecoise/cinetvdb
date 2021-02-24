@@ -145,7 +145,7 @@ migrateDatabase sqliteDbPath newSqliteDbPath = do
   liftIO $ putStrLn "Fetching FilmoDureesEpisodes table..."
   filmoDureesEpisodes <- liftIO $ getFilmoDureesEpisodes ipool
   liftIO $ putStrLn "Fetching FilmoNombresEpisodes table..."
-  filmoNombresEpisodes <- liftIO $ getFilmoNombresEpisodes ipool
+  filmoNombreEpisodes <- liftIO $ getFilmoNombresEpisodes ipool
 
   flip liftSqlPersistMPool opool $ do
     -- liftIO $ T.putStrLn "Writing Film entities to database..."
@@ -209,7 +209,7 @@ migrateDatabase sqliteDbPath newSqliteDbPath = do
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) filmoDureesEpisodes
     liftIO
       $ T.putStrLn "Writing FilmoNombresEpisodes entities to database..."
-    mapM_ (\c -> insertKey (entityKey c) (entityVal c)) filmoNombresEpisodes
+    mapM_ (\c -> insertKey (entityKey c) (entityVal c)) filmoNombreEpisodes
 
     -- runConduit $ selectSource (distinct $ from $ \film_filmo -> return film_filmo)
     --           .| (CL.mapM_ (\(e :: Entity Pays) -> insertKey (entityKey e) (entityVal e)))

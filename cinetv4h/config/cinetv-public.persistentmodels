@@ -130,7 +130,7 @@ FilmoDureesEpisodes
   deriving Eq Show
 
 FilmoNombresEpisodes
-  Id sql=NombresEpisodesID
+  Id sql=NombreEpisodesID
   filmoId FilmoId
   nombreEpisodes Int
   deriving Eq Show
