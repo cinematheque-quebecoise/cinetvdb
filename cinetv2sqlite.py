@@ -107,14 +107,22 @@ def main(args):
     #     os.system(f'cinetv2public-exe -s {cinetvDbPath} -d {outputdir}')
 
     cinetvPublicDbPath = path.join(outputdir, f'cinetv-{date}-publique.db')
-    cinetvCsvTarPath = path.join(outputdir, f'cinetv-{date}-publique.tar.gz')
+
+    print("[INFO] Exporting SQLite database to CSV files...")
     cinetvCsvPath = path.join(outputdir, "csv")
     Path(cinetvCsvPath).mkdir(parents=True, exist_ok=True)
     os.system(f'sqlite-dump-to-csv --db {cinetvPublicDbPath} --output {cinetvCsvPath}')
 
+    print("[INFO] Generating a tarball from CSV files...")
+    cinetvCsvTarPath = path.join(outputdir, f'cinetv-{date}-csv.tar.gz')
     with tarfile.open(cinetvCsvTarPath, "w:gz") as tar:
         for f in glob(f'{cinetvCsvPath}/*'):
-            tar.add(f)
+            tar.add(f, arcname=f"cinetv-{date}/{path.basename(f)}")
+
+    print("[INFO] Generating a tarball from SQLite DB file...")
+    cinetvPublicDbTarPath = path.join(outputdir, f'cinetv-{date}-sqlite.tar.gz')
+    with tarfile.open(cinetvPublicDbTarPath, "w:gz") as tar:
+        tar.add(cinetvPublicDbPath, arcname=f"cinetv-{date}/cinetv-{date}.db")
 
 if __name__ == '__main__':
     arguments = docopt(__doc__, version='cmtq-release 2.0')
