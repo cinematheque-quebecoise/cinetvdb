@@ -39,72 +39,72 @@ def main(args):
 
     outputdir = f'{path.join(args["-o"], "cinetv-" + date)}'
 
-    # shutil.rmtree(outputdir)
-    # # if os.path.exists(outputdir):
-    # #     for f in glob(f'{outputdir}/*'):
-    # #         os.remove(f)
-    # #     os.rmdir(outputdir)
+    shutil.rmtree(outputdir)
+    # if os.path.exists(outputdir):
+    #     for f in glob(f'{outputdir}/*'):
+    #         os.remove(f)
+    #     os.rmdir(outputdir)
 
-    # for f in glob(path.join(args['-d'], '*.xlsx')):
-    #     csvFile = path.join(args['-d'], f.replace('.xlsx', '') + '.csv')
-    #     if args['--reload'] or not os.path.exists(csvFile):
-    #         print(f'[INFO] Converting file {f} to {csvFile}')
-    #         Xlsx2csv(f, skip_empty_lines=True, outputencoding='utf-8').convert(csvFile)
+    for f in glob(path.join(args['-d'], '*.xlsx')):
+        csvFile = path.join(args['-d'], f.replace('.xlsx', '') + '.csv')
+        if args['--reload'] or not os.path.exists(csvFile):
+            print(f'[INFO] Converting file {f} to {csvFile}')
+            Xlsx2csv(f, skip_empty_lines=True, outputencoding='utf-8').convert(csvFile)
 
-    # csvFilesPattern = path.join(args['-d'], '*.csv')
+    csvFilesPattern = path.join(args['-d'], '*.csv')
 
-    # Path(outputdir).mkdir(parents=True, exist_ok=True)
-    # cinetvDbPath = path.join(outputdir, f'cinetv-{date}.db')
-    # print(f'[INFO] Converting generated CSV files from {csvFilesPattern} to SQLite database at {cinetvDbPath}')
-    # # if os.system(f'csvs-to-sqlite {csvFilesPattern} {cinetvDbPath}') != 0:
-    # #     return
-    # os.system(f'csvs-to-sqlite {csvFilesPattern} {cinetvDbPath}')
+    Path(outputdir).mkdir(parents=True, exist_ok=True)
+    cinetvDbPath = path.join(outputdir, f'cinetv-{date}.db')
+    print(f'[INFO] Converting generated CSV files from {csvFilesPattern} to SQLite database at {cinetvDbPath}')
+    # if os.system(f'csvs-to-sqlite {csvFilesPattern} {cinetvDbPath}') != 0:
+    #     return
+    os.system(f'csvs-to-sqlite {csvFilesPattern} {cinetvDbPath}')
 
-    # cinetvExtDbPath = path.join(outputdir, f'cinetv-{date}-ext.db')
-    # cinetvExtAutoDbPath = path.join(outputdir, f'cinetv-{date}-ext-auto.db')
-    # if args["-e"] and args["-a"]:
-    #     csvFilesExtPattern = path.join(args['-e'], '*.csv')
-    #     print(f'[INFO] Converting CineTV CSV files ({csvFilesPattern}) + CineTV extension CSV files ({csvFilesExtPattern}) to SQLite database at {cinetvExtDbPath}')
-    #     os.system(f'csvs-to-sqlite {csvFilesPattern} {csvFilesExtPattern} {cinetvExtDbPath}')
+    cinetvExtDbPath = path.join(outputdir, f'cinetv-{date}-ext.db')
+    cinetvExtAutoDbPath = path.join(outputdir, f'cinetv-{date}-ext-auto.db')
+    if args["-e"] and args["-a"]:
+        csvFilesExtPattern = path.join(args['-e'], '*.csv')
+        print(f'[INFO] Converting CineTV CSV files ({csvFilesPattern}) + CineTV extension CSV files ({csvFilesExtPattern}) to SQLite database at {cinetvExtDbPath}')
+        os.system(f'csvs-to-sqlite {csvFilesPattern} {csvFilesExtPattern} {cinetvExtDbPath}')
 
-    #     print(f'[INFO] Updating CineTV automatically generated extension data...')
-    #     os.system(f'cinetvlinking-exe filmo -d {cinetvExtDbPath} -o {args["-a"]}')
-    #     os.system(f'cinetvlinking-exe nom apply -d {cinetvExtDbPath} -o {args["-a"]}')
+        print(f'[INFO] Updating CineTV automatically generated extension data...')
+        os.system(f'cinetvlinking-exe filmo -d {cinetvExtDbPath} -o {args["-a"]}')
+        os.system(f'cinetvlinking-exe nom apply -d {cinetvExtDbPath} -o {args["-a"]}')
 
-    #     csvFilesExtAutoPattern = path.join(args['-a'], '*.csv')
-    #     print(f'[INFO] Converting CineTV CSV files ({csvFilesPattern}) + CineTV extension CSV files ({csvFilesExtPattern}) + CineTV automatically generated CSV files {csvFilesExtAutoPattern} to SQLite database at {cinetvExtAutoDbPath}')
-    #     # os.system(f'csvs-to-sqlite --replace-tables {csvFilesPattern} {csvFilesExtPattern} {csvFilesExtAutoPattern} {cinetvExtAutoDbPath}')
-    #     os.system(f'csvs-to-sqlite {csvFilesPattern} {csvFilesExtPattern} {cinetvExtAutoDbPath}')
-    #     for f in glob(path.join(args['-a'], '*.csv')):
-    #         tablename = path.splitext(path.basename(f))[0]
-    #         os.system(f'csvs-to-sqlite -pk NomID -t {tablename} {f} {cinetvExtAutoDbPath}')
+        csvFilesExtAutoPattern = path.join(args['-a'], '*.csv')
+        print(f'[INFO] Converting CineTV CSV files ({csvFilesPattern}) + CineTV extension CSV files ({csvFilesExtPattern}) + CineTV automatically generated CSV files {csvFilesExtAutoPattern} to SQLite database at {cinetvExtAutoDbPath}')
+        # os.system(f'csvs-to-sqlite --replace-tables {csvFilesPattern} {csvFilesExtPattern} {csvFilesExtAutoPattern} {cinetvExtAutoDbPath}')
+        os.system(f'csvs-to-sqlite {csvFilesPattern} {csvFilesExtPattern} {cinetvExtAutoDbPath}')
+        for f in glob(path.join(args['-a'], '*.csv')):
+            tablename = path.splitext(path.basename(f))[0]
+            os.system(f'csvs-to-sqlite -pk NomID -t {tablename} {f} {cinetvExtAutoDbPath}')
 
-    #     print(f'[INFO] Creating a public subset of CineTV database {cinetvExtAutoDbPath} at {outputdir}')
-    #     os.system(f'cinetv2public-exe -s {cinetvExtAutoDbPath} -d {outputdir}')
+        print(f'[INFO] Creating a public subset of CineTV database {cinetvExtAutoDbPath} at {outputdir}')
+        os.system(f'cinetv2public-exe -s {cinetvExtAutoDbPath} -d {outputdir}')
 
-    # elif args["-e"] and not args["-a"]:
-    #     csvFilesExtPattern = path.join(args['-e'], '*.csv')
-    #     print(f'[INFO] Converting CineTV CSV files ({csvFilesPattern}) + CineTV extension CSV files ({csvFilesExtPattern}) to SQLite database at {cinetvExtDbPath}')
-    #     os.system(f'csvs-to-sqlite {csvFilesPattern} {csvFilesExtPattern} {cinetvExtDbPath}')
+    elif args["-e"] and not args["-a"]:
+        csvFilesExtPattern = path.join(args['-e'], '*.csv')
+        print(f'[INFO] Converting CineTV CSV files ({csvFilesPattern}) + CineTV extension CSV files ({csvFilesExtPattern}) to SQLite database at {cinetvExtDbPath}')
+        os.system(f'csvs-to-sqlite {csvFilesPattern} {csvFilesExtPattern} {cinetvExtDbPath}')
 
-    #     print(f'[INFO] Creating a public subset of CineTV database {cinetvExtDbPath} at {outputdir}')
-    #     os.system(f'cinetv2public-exe -s {cinetvExtDbPath} -d {outputdir}')
+        print(f'[INFO] Creating a public subset of CineTV database {cinetvExtDbPath} at {outputdir}')
+        os.system(f'cinetv2public-exe -s {cinetvExtDbPath} -d {outputdir}')
 
-    # elif not args["-e"] and args["-a"]:
-    #     print(f'[INFO] Updating CineTV automatically generated extension data...')
-    #     os.system(f'cinetvlinking-exe filmo -d {cinetvDbPath} -o {args["-a"]}')
-    #     os.system(f'cinetvlinking-exe nom apply -d {cinetvDbPath} -o {args["-a"]}')
+    elif not args["-e"] and args["-a"]:
+        print(f'[INFO] Updating CineTV automatically generated extension data...')
+        os.system(f'cinetvlinking-exe filmo -d {cinetvDbPath} -o {args["-a"]}')
+        os.system(f'cinetvlinking-exe nom apply -d {cinetvDbPath} -o {args["-a"]}')
 
-    #     csvFilesExtAutoPattern = path.join(args['-a'], '*.csv')
-    #     print(f'[INFO] Converting CineTV CSV files ({csvFilesPattern}) + CineTV automatically generated CSV files {csvFilesExtAutoPattern} to SQLite database at {cinetvExtAutoDbPath}')
-    #     os.system(f'csvs-to-sqlite {csvFilesPattern} {csvFilesExtAutoPattern} {cinetvExtAutoDbPath}')
+        csvFilesExtAutoPattern = path.join(args['-a'], '*.csv')
+        print(f'[INFO] Converting CineTV CSV files ({csvFilesPattern}) + CineTV automatically generated CSV files {csvFilesExtAutoPattern} to SQLite database at {cinetvExtAutoDbPath}')
+        os.system(f'csvs-to-sqlite {csvFilesPattern} {csvFilesExtAutoPattern} {cinetvExtAutoDbPath}')
 
-    #     print(f'[INFO] Creating a public subset of CineTV database {cinetvExtAutoDbPath} at {outputdir}')
-    #     os.system(f'cinetv2public-exe -s {cinetvExtAutoDbPath} -d {outputdir}')
+        print(f'[INFO] Creating a public subset of CineTV database {cinetvExtAutoDbPath} at {outputdir}')
+        os.system(f'cinetv2public-exe -s {cinetvExtAutoDbPath} -d {outputdir}')
 
-    # else:
-    #     print(f'[INFO] Creating a public subset of CineTV database {cinetvDbPath} at {outputdir}')
-    #     os.system(f'cinetv2public-exe -s {cinetvDbPath} -d {outputdir}')
+    else:
+        print(f'[INFO] Creating a public subset of CineTV database {cinetvDbPath} at {outputdir}')
+        os.system(f'cinetv2public-exe -s {cinetvDbPath} -d {outputdir}')
 
     cinetvPublicDbPath = path.join(outputdir, f'cinetv-{date}-publique.db')
 

@@ -337,8 +337,26 @@ getLangue pool =
   liftIO $ flip runSqlPersistMPool pool $ select $ distinct $ from return
 
 getSujet :: Pool SqlBackend -> IO [Entity Sujet]
-getSujet pool =
-  liftIO $ flip runSqlPersistMPool pool $ select $ distinct $ from return
+getSujet pool = do
+  sujetEntitiesGenre <-
+    liftIO
+      $ flip liftSqlPersistMPool pool
+      $ select
+      $ distinct
+      $ from
+      $ \(filmoGenresCategories, sujet) -> do
+          where_ (   sujet ^.  SujetId ==. filmoGenresCategories ^.  Filmo_GenresCategoriesSujetId)
+          return sujet
+  sujetEntitiesOrganisme <-
+    liftIO
+      $ flip liftSqlPersistMPool pool
+      $ select
+      $ distinct
+      $ from
+      $ \(filmoGenerique, sujet) -> do
+          where_ ( sujet ?.  SujetId ==. filmoGenerique ^.  Filmo_GeneriqueOrganismeId)
+          return sujet
+  return $ L.nub $ catMaybes ((Just <$> sujetEntitiesGenre) ++ sujetEntitiesOrganisme)
 
 getFilmo :: Pool SqlBackend -> IO [Entity Filmo]
 getFilmo pool =
