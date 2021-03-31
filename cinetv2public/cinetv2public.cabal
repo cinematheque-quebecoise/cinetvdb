@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: b1144fd52a31413a474cedd0509c5c81e603d622eb04db7ce16bcef8e977a72e
+-- hash: dd55915f5dff6b1d8b90df9b11f4aca20b224cab02632df647c9d3b9ab1f2dd1
 
 name:           cinetv2public
-version:        0.1.0.0
+version:        0.2
 description:    Please see the README on Github at <https://github.com/githubuser/cinetv-migration#readme>
 homepage:       https://github.com/githubuser/cinetv2public#readme
 bug-reports:    https://github.com/githubuser/cinetv2public/issues

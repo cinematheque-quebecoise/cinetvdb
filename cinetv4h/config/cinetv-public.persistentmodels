@@ -12,8 +12,6 @@ Filmo
   anneeFinProd Int Maybe
   dureeOriginaleMin Int Maybe
   dureeOriginaleSec Int Maybe
-  resume Text Maybe
-  resumeAnglais Text Maybe
   dateDebProd Text Maybe
   dateFinProd Text Maybe
   anneeDebCopyright Int Maybe
@@ -101,18 +99,6 @@ Filmo_Generique
   filmoId FilmoId
   organismeId SujetId Maybe
   nomId NomId Maybe
-  deriving Eq Show
-
-FilmoResumes
-  Id sql=FilmoResumeID
-  filmoId FilmoId
-  resume Text Maybe
-  deriving Eq Show
-
-FilmoResumesAnglais
-  Id sql=FilmoResumeAnglaisID
-  filmoId FilmoId
-  resumeAnglais Text Maybe
   deriving Eq Show
 
 FilmoDureesOriginales

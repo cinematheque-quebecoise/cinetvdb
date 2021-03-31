@@ -7,7 +7,7 @@ cabal-version: 1.12
 -- hash: 9c696b3127b40a6c5ce39c29371909bdb8b37a28b53e49d20e1c482e71632937
 
 name:           cinetv4h
-version:        0.1.0.0
+version:        0.2
 description:    Please see the README on Github at <https://github.com/githubuser/cinetv4h#readme>
 homepage:       https://github.com/githubuser/cinetv4h#readme
 bug-reports:    https://github.com/githubuser/cinetv4h/issues

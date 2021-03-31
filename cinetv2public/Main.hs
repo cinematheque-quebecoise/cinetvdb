@@ -126,10 +126,6 @@ migrateDatabase sqliteDbPath newSqliteDbPath = do
   -- fonctionLienWikidata <- liftIO $ getFonctionLienWikidata ipool
   liftIO $ putStrLn "Fetching Filmo_Generique table..."
   filmoGenerique <- liftIO $ getFilmoGenerique ipool
-  liftIO $ putStrLn "Fetching Filmo_Resumes table..."
-  filmoResumeEntities <- liftIO $ getFilmoResumes ipool
-  liftIO $ putStrLn "Fetching Filmo_ResumesAnglais table..."
-  filmoResumeAnglaisEntities <- liftIO $ getFilmoResumesAnglais ipool
   liftIO $ putStrLn "Fetching Filmo_Langue table..."
   filmoLangue <- liftIO $ getFilmoLangue ipool
   liftIO $ putStrLn "Fetching Langue_LienWikidata table..."
@@ -187,12 +183,6 @@ migrateDatabase sqliteDbPath newSqliteDbPath = do
     -- mapM_ (\c -> insertKey (entityKey c) (entityVal c)) fonctionLienWikidata
     liftIO $ T.putStrLn "Writing Filmo_Generique entities to database..."
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) filmoGenerique
-    liftIO $ T.putStrLn "Writing Filmo_Resumes entities to database..."
-    mapM_ (\c -> insertKey (entityKey c) (entityVal c)) filmoResumeEntities
-    liftIO
-      $ T.putStrLn "Writing Filmo_ResumesAnglais entities to database..."
-    mapM_ (\c -> insertKey (entityKey c) (entityVal c))
-          filmoResumeAnglaisEntities
     liftIO $ T.putStrLn "Writing Filmo_Langue entities to database..."
     mapM_ (\c -> insertKey (entityKey c) (entityVal c)) filmoLangue
     liftIO $ T.putStrLn "Writing Langue_LienWikidata entities to database..."
@@ -508,28 +498,6 @@ getFonction pool =
 --       from $ \(fonction, fonctionLienWikidata) -> do
 --       where_ $ fonctionLienWikidata ^. Fonction_LienWikidataFonctionId ==. fonction ^. FonctionId
 --       return fonctionLienWikidata
-
-getFilmoResumes :: Pool SqlBackend -> IO [Entity FilmoResumes]
-getFilmoResumes pool =
-  liftIO
-    $ flip runSqlPersistMPool pool
-    $ select
-    $ distinct
-    $ from
-    $ \(filmo, filmoResumes) -> do
-        where_ (filmoResumes ^. FilmoResumesFilmoId ==. filmo ^. FilmoId)
-        return filmoResumes
-
-getFilmoResumesAnglais :: Pool SqlBackend -> IO [Entity FilmoResumesAnglais]
-getFilmoResumesAnglais pool =
-  liftIO
-    $ flip runSqlPersistMPool pool
-    $ select
-    $ distinct
-    $ from
-    $ \(filmo, filmoResumes) -> do
-        where_ (filmoResumes ^. FilmoResumesAnglaisFilmoId ==. filmo ^. FilmoId)
-        return filmoResumes
 
 getFilmoLangue :: Pool SqlBackend -> IO [Entity Filmo_Langue]
 getFilmoLangue pool =
