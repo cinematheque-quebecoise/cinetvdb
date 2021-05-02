@@ -1,19 +1,17 @@
-{ mkDerivation, base, cinetv4h, directory, docopt, esqueleto
-, filepath, hpack, persistent-sqlite, regex, resource-pool, stdenv
-, text, unliftio
-}:
-mkDerivation {
-  pname = "cinetv2public";
-  version = "0.1.0.0";
-  src = ./.;
-  isLibrary = false;
-  isExecutable = true;
-  libraryToolDepends = [ hpack ];
-  executableHaskellDepends = [
-    base cinetv4h directory docopt esqueleto filepath persistent-sqlite
-    regex resource-pool text unliftio
-  ];
-  prePatch = "hpack";
-  homepage = "https://github.com/githubuser/cinetv2public#readme";
-  # license = stdenv.lib.licenses.gpl3;
-}
+{ pkgs, cinetv4h }:
+
+let
+  inherit (pkgs) haskellPackages;
+
+  docoptPkgs = haskellPackages.callCabal2nix "docopt" (builtins.fetchGit {
+    url = "https://github.com/gelisam/docopt.hs.git";
+    ref = "refs/heads/monad-fail";
+    rev = "16dc7bc596c0ea4fa4466b12f474b1abfa72c885";
+  }) {};
+
+  mkDerivation = pkgs.stdenv.mkDerivation;
+in
+  haskellPackages.callCabal2nix "cinetv2public" (./.) {
+    inherit cinetv4h;
+    docopt = pkgs.haskell.lib.dontCheck docoptPkgs;
+  }

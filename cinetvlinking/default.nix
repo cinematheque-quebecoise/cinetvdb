@@ -1,39 +1,52 @@
-{ mkDerivation, base, bytestring, cassava, cinetv4h, containers
-, directory, either, esqueleto, filepath, foldl, hpack, hsparql
-, hspec, http-client, monoidal-containers, neat-interpolation
-, optparse-simple, persistent, persistent-sqlite, random
-, resource-pool, rio, sparql-protocol, stdenv, tabl, text, text-icu
-, transformers, unliftio, unordered-containers, vector
-}:
-mkDerivation {
-  pname = "cinetvlinking";
-  version = "0.1.0.0";
-  src = ./.;
-  isLibrary = true;
-  isExecutable = true;
-  libraryHaskellDepends = [
-    base bytestring cassava cinetv4h containers directory either
-    esqueleto filepath foldl hsparql http-client monoidal-containers
-    neat-interpolation persistent persistent-sqlite random
-    resource-pool rio sparql-protocol tabl text text-icu transformers
-    unliftio unordered-containers vector
-  ];
-  libraryToolDepends = [ hpack ];
-  executableHaskellDepends = [
-    base bytestring cassava cinetv4h containers directory either
-    esqueleto filepath foldl hsparql http-client monoidal-containers
-    neat-interpolation optparse-simple persistent persistent-sqlite
-    random resource-pool rio sparql-protocol tabl text text-icu
-    transformers unliftio unordered-containers vector
-  ];
-  testHaskellDepends = [
-    base bytestring cassava cinetv4h containers directory either
-    esqueleto filepath foldl hsparql hspec http-client
-    monoidal-containers neat-interpolation persistent persistent-sqlite
-    random resource-pool rio sparql-protocol tabl text text-icu
-    transformers unliftio unordered-containers vector
-  ];
-  prePatch = "hpack";
-  homepage = "https://github.com/githubuser/cinetvlinking#readme";
-  license = stdenv.lib.licenses.bsd3;
-}
+{ pkgs, cinetv4h }:
+let
+  # pkgs = import (builtins.fetchGit {
+  #   # Descriptive name to make the store path easier to identify
+  #   name = "nixos-unstable-2020-04-29";
+  #   url = "https://github.com/nixos/nixpkgs-channels/";
+  #   # Commit hash for nixos-unstable as of 2018-09-12
+  #   # `git ls-remote https://github.com/nixos/nixpkgs-channels nixos-unstable`
+  #   ref = "refs/heads/nixos-unstable";
+  #   rev = "7c399a4ee080f33cc500a3fda33af6fccfd617bd";
+  # }) {};
+  # pkgs = import ./nixpkgs.nix;
+  # import (builtins.fetchGit {
+  #   # Descriptive name to make the store path easier to identify
+  #   # name = "nixos-stable-20.03";
+  #   # url = "https://github.com/nixos/nixpkgs-channels/";
+  #   # ref = "refs/heads/nixos-20.03";
+  #   # rev = "20904118004113e400633f080e73f51ac6080e14";
+
+  #   name = "nixos-unstable-2020-04-29";
+  #   url = "https://github.com/nixos/nixpkgs-channels/";
+  #   ref = "refs/heads/nixos-unstable";
+  #   rev = "7c399a4ee080f33cc500a3fda33af6fccfd617bd";
+  # }) {}
+
+  inherit (pkgs) haskellPackages;
+
+  # rdf4hPackage = haskellPackages.callCabal2nix "rdf4h" (builtins.fetchGit {
+  #   url = "https://github.com/robstewart57/rdf4h.git";
+  #   ref = "refs/heads/master";
+  #   rev = "35d7a7948fd869faa7eb98c7fe1c47c3bd341c24";
+  # }) {};
+
+  haskellPackagesOverride = haskellPackages.override {
+    overrides = self: upser: rec {
+      # rdf4h = pkgs.haskell.lib.dontCheck rdf4hPackage;
+      # monoidal-containers = pkgs.haskell.lib.doJailbreak haskellPackages.monoidal-containers;
+    };
+  };
+
+  # hsparqlPackage = haskellPackagesOverride.callCabal2nix "hsparql" (builtins.fetchGit {
+  #   url = "https://github.com/robstewart57/hsparql.git";
+  #   ref = "refs/heads/master";
+  #   rev = "ac11fa787aa4317675d34ccb0009b7cda8b87550";
+  # }) {};
+
+in
+  haskellPackagesOverride.callCabal2nix "cinetvlinking" (./.) {
+    inherit cinetv4h;
+    # cinetv4h = haskellPackages.callCabal2nix "cinetv4h" (./../cinetv4h) {};
+    # hsparql = pkgs.haskell.lib.dontCheck hsparqlPackage;
+  }

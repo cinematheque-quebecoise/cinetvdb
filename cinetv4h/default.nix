@@ -1,5 +1,5 @@
-{ pkgs, compiler ? "ghc883" }:
+{ pkgs }:
 let
-  haskellPackages = pkgs.haskell.packages.${compiler};
+  inherit (pkgs) haskellPackages;
 in
   haskellPackages.callCabal2nix "cinetv4h" (./.) {}

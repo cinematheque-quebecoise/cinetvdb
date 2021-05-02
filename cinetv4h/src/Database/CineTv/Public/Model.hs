@@ -29,6 +29,7 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE DataKinds #-}
 
 module Database.CineTv.Public.Model where
 

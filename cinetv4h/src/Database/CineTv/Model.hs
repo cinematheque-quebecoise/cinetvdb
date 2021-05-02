@@ -28,6 +28,7 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE DataKinds #-}
 
 module Database.CineTv.Model where
 

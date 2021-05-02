@@ -1,10 +1,10 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.33.0.
+-- This file has been generated from package.yaml by hpack version 0.34.4.
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: dd55915f5dff6b1d8b90df9b11f4aca20b224cab02632df647c9d3b9ab1f2dd1
+-- hash: 399b7f613da3e7257a63417f5a111a36cdf7b3c55fe4090842a3283efb77fd17
 
 name:           cinetv2public
 version:        0.2
@@ -29,13 +29,13 @@ executable cinetv2public-exe
   build-depends:
       base >=4.11 && <10
     , cinetv4h
-    , directory >=1.3 && <1.4
+    , directory
     , docopt
-    , esqueleto >=3 && <3.4
+    , esqueleto
     , filepath
     , persistent-sqlite
     , regex
     , resource-pool
-    , text >=1.2 && <1.3
+    , text
     , unliftio
   default-language: Haskell2010
