@@ -59,9 +59,8 @@ let
       icu
 
       hlint
-      stylish-haskell
+      ormolu
       haskell-language-server
-      haskellPackages.brittany
 
       (pkgs.python38.withPackages (pythonPackages: with pythonPackages; [
         csvs-to-sqlite

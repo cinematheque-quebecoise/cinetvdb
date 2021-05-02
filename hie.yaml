@@ -1,0 +1,11 @@
+cradle:
+  cabal:
+    - path: "cinetv4h"
+      component: "lib:cinetv4h"
+
+    - path: "cinetvlinking/src"
+      component: "lib:cinetvlinking"
+
+    - path: "cinetvlinking/app"
+      component: "cinetvlinking:exe:cinetvlinking"
+
