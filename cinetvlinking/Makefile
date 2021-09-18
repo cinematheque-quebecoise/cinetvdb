@@ -1,6 +1,6 @@
 # Date of data exportation.
 DATE=2019-07-12
-CINETV_SQLITE=${HOME}/Documents/cinetv/cinetv-${DATE}/cinetv-${DATE}-publique.db
+CINETV_SQLITE=${HOME}/Documents/cinetv/cinetv-${DATE}/cinetv-${DATE}.db
 CINETV_CSV_EXTENSIONS=${HOME}/git/cq/cinetvext
 DESTDIR=data
 
@@ -8,7 +8,7 @@ build:
 	cabal build
 
 preprocess: ${CINETV_CSV_EXTENSIONS} ${CINETV_SQLITE} ${DESTDIR}
-	cabal run -- cinetvlinking-exe nom preprocess ${CINETV_CSV_EXTENSIONS} 750 0.6 -d ${CINETV_SQLITE} -o ${DESTDIR}
+	cabal run -- cinetvlinking-exe nom preprocess ${CINETV_CSV_EXTENSIONS} 100 0.6 -d ${CINETV_SQLITE} -o ${DESTDIR}
 
 evaluate: ${CINETV_SQLITE} ${DESTDIR}
 	cabal run -- cinetvlinking-exe nom evaluate -d ${CINETV_SQLITE} -o ${DESTDIR}

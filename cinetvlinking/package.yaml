@@ -20,36 +20,37 @@ extra-source-files:
 description:         Please see the README on Github at <https://github.com/githubuser/cinetvlinking#readme>
 
 dependencies:
+- aeson
 - base >= 4.11 && < 10
-- rio >= 0.1.12.0
+- bytestring >= 0.10
+- cassava >= 0.5
 - cinetv4h
-- text
-- text-icu
-- either
-- transformers
+- containers >= 0.6
 - directory
+- either
+- esqueleto >= 3
+- filepath
+- foldl
+- hsparql >= 0.3.6
+- http-client >= 0.6
+- http-client-tls
+- monoidal-containers
+- mtl
+- neat-interpolation
 - persistent
 - persistent-sqlite
-- esqueleto >= 3
-- resource-pool
-- cassava >= 0.5
-- containers >= 0.6
-- tabl
-- monoidal-containers
-- unordered-containers >= 0.2
-- bytestring >= 0.10
-- sparql-protocol
-- neat-interpolation
-- http-client >= 0.6
 - random
-- vector
-- foldl
-- filepath
+- rio >= 0.1.12.0
+- rdf4h >= 4.0.2
+- resource-pool
+- sparql-protocol
+- tabl
+- text
+- text-icu
+- transformers
 - unliftio
-- aeson
-- http-client-tls
-- mtl
-# - hsparql
+- unordered-containers >= 0.2
+- vector
 
 ghc-options:
 - -Wall

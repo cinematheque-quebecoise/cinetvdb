@@ -150,3 +150,7 @@ $ nix-build release.nix
 ```
 
 L'exécutable devient disponible dans le chemin relatif `./result/bin/cinetvlinking-exe`.
+
+### À faire
+
+- Générer une erreur si le fichier de `cinetvext` n'a pas les bonnes colonnes CSV.

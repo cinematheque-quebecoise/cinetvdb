@@ -8,15 +8,15 @@ import Data.Pool (Pool)
 import Database.Persist.Class (PersistConfigPool)
 import Database.Persist.Sqlite (SqliteConf(..), SqlBackend)
 
-data Command = CountryLinking
-             | FilmoLinking !Bool
-             | NomLinking !NomLinkingCommand
+data Command = FilmoLinking !LinkingCommand
+             | NomLinking !LinkingCommand
+             | OrgLinking !LinkingCommand
 
-data NomLinkingCommand = NomLinkingPreprocess !FilePath !Integer !Double
-                       | NomLinkingEvaluation !Bool
-                       | NomLinkingEvaluationResults !Bool
-                       | NomLinkingApply !Bool
-                       | NomLinkingInteractive
+data LinkingCommand = LinkingPreprocess !FilePath !Integer !Double
+                    | LinkingEvaluation !Bool
+                    | LinkingEvaluationResults !Bool
+                    | LinkingApply !Bool
+                    | LinkingInteractive
 
 -- | Command line arguments
 data Options = Options

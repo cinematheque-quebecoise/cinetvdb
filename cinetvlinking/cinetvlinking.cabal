@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: d975faef46e485e75298093c329b8584b43e54b1061299d7b0ffb51c685cbedd
+-- hash: 0ebb41fcb63c40c9ff4763c56d9df9b6ac413595d1b8c519ad702c08d766ed38
 
 name:           cinetvlinking
 version:        0.1.0.0
@@ -27,25 +27,25 @@ source-repository head
 library
   exposed-modules:
       Data.List.Extended
-      Database.CineTV
+      Database.CQ
+      Database.CQ.Filmo
       Database.SPARQL.Protocol.Client.Extended
+      EntityLinking.Apply
+      EntityLinking.Dataset
+      EntityLinking.Evaluation
+      EntityLinking.Evaluation.Types
+      EntityLinking.Filmo.Types
+      EntityLinking.Filmo.Wikidata
       EntityLinking.Fonction.Wikidata
+      EntityLinking.Interactive
+      EntityLinking.Nom.Types
       EntityLinking.Nom.Wikidata
+      EntityLinking.Preprocessing
+      EntityLinking.Types
+      EntityLinking.Wikidata
       Import
       Run
-      Run.FilmoLinking
-      Run.NomLinking.Apply
-      Run.NomLinking.Evaluation
-      Run.NomLinking.Interactive
-      Run.NomLinking.Model.Wikidata
-      Run.NomLinking.Preprocessing
       Types
-      Types.AlgorithmResult
-      Types.AnnotatedFeatures
-      Types.FilmoLinked
-      Types.PaysLinked
-      Types.PersonFeatures
-      Types.Resource
       Util
   other-modules:
       Paths_cinetvlinking
@@ -64,6 +64,7 @@ library
     , esqueleto >=3
     , filepath
     , foldl
+    , hsparql >=0.3.6
     , http-client >=0.6
     , http-client-tls
     , monoidal-containers
@@ -72,6 +73,7 @@ library
     , persistent
     , persistent-sqlite
     , random
+    , rdf4h >=4.0.2
     , resource-pool
     , rio >=0.1.12.0
     , sparql-protocol
@@ -104,6 +106,7 @@ executable cinetvlinking-exe
     , esqueleto >=3
     , filepath
     , foldl
+    , hsparql >=0.3.6
     , http-client >=0.6
     , http-client-tls
     , monoidal-containers
@@ -113,6 +116,7 @@ executable cinetvlinking-exe
     , persistent
     , persistent-sqlite
     , random
+    , rdf4h >=4.0.2
     , resource-pool
     , rio >=0.1.12.0
     , sparql-protocol
@@ -146,6 +150,7 @@ test-suite cinetvlinking-test
     , esqueleto >=3
     , filepath
     , foldl
+    , hsparql >=0.3.6
     , hspec
     , http-client >=0.6
     , http-client-tls
@@ -155,6 +160,7 @@ test-suite cinetvlinking-test
     , persistent
     , persistent-sqlite
     , random
+    , rdf4h >=4.0.2
     , resource-pool
     , rio >=0.1.12.0
     , sparql-protocol

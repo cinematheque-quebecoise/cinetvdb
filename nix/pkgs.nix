@@ -9,15 +9,22 @@ let
 
   sqlite-dump-to-csv = import ./sqlite-dump-to-csv.nix { inherit pkgs; };
 
-  haskellPackages = pkgs.haskell.packages.ghc8104.override {
+  hpkgs = pkgs.haskell.packages.ghc8104;
+
+  hsparql = hpkgs.callCabal2nix "hsparql" (builtins.fetchGit {
+    url = "https://github.com/robstewart57/hsparql.git";
+    ref = "refs/heads/master";
+    rev = "32d25fb1324663adf3241f42b61fcb8ce918c557";
+  }) {};
+
+  haskellPackages = hpkgs.override {
     overrides = hself: hsuper: {
-      inherit cinetv4h;
-      inherit cinetv2public;
-      inherit cinetvlinking;
+      inherit cinetv4h cinetv2public cinetvlinking;
+      inherit hsparql;
     };
   };
 
-  drv = pkgs.stdenv.mkDerivation rec {
+  cinetv2sqlite = pkgs.stdenv.mkDerivation rec {
     pname    = "cinetv2sqlite";
     version = "0.1.0";
 
@@ -59,7 +66,7 @@ let
       icu
 
       hlint
-      ormolu
+      haskellPackages.brittany
       haskell-language-server
 
       (pkgs.python38.withPackages (pythonPackages: with pythonPackages; [
@@ -70,5 +77,7 @@ let
 in
   {
     inherit shell;
-    inherit drv;
+    inherit cinetv2sqlite;
+    inherit cinetv2public;
+    inherit cinetvlinking;
   }

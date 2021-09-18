@@ -1,1 +1,1 @@
-(import ./nix/pkgs.nix).drv
+(import ./nix/pkgs.nix)

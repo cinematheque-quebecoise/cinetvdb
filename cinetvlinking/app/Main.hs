@@ -47,7 +47,7 @@ main = do
   -- let sqliteDbPath = optionsSqliteDbPath options
   -- pool <- createPoolConfig (SqliteConf sqliteDbPath 1)
 
-  let cinetvDbPath = optionsSqliteDbPath $ options
+  let cinetvDbPath = optionsSqliteDbPath options
   cinetvDbPathExists <- doesFileExist cinetvDbPath
   unless cinetvDbPathExists $ error $ "Filepath " <> cinetvDbPath <> " does not exists!"
   pool <- createPoolConfig (SqliteConf (Text.pack cinetvDbPath) 1)
@@ -63,50 +63,44 @@ main = do
 
 parseCommand :: Parser Command
 parseCommand = subparser $
-     command "nom" ((NomLinking <$> parseNomLinking) `withInfo` "Link Nom table to Wikidata.")
-  <> command "filmo" (parseFilmoLinking `withInfo` "Link Filmo table to Wikidata.")
+     command "nom" ((NomLinking <$> parseLinking) `withInfo` "Link people (Nom table) to Wikidata.")
+  <> command "filmo" ((FilmoLinking <$> parseLinking) `withInfo` "Link works (Filmo table) to Wikidata.")
+  <> command "org" ((OrgLinking <$> parseLinking) `withInfo` "Link organisations (Sujet/Organisme table) to Wikidata.")
 
-parseNomLinking :: Parser NomLinkingCommand
-parseNomLinking = subparser $
-     command "preprocess" (parseNomLinkingPreprocess `withInfo` "Preprocess data for linking Nom table.")
-  <> command "evaluate" (parseNomLinkingEvaluate `withInfo` "Apply algorithm on annotated dataset.")
-  <> command "evaluate-result" (parseNomLinkingEvaluateResult `withInfo` "Evaluate algorithm on generated dataset.")
-  <> command "apply" (parseNomLinkingApply `withInfo` "Apply algorithm on unannotated dataset.")
-  <> command "interactive" (parseNomLinkingInteractive `withInfo` "Apply algorithm interactively.")
+parseLinking :: Parser LinkingCommand
+parseLinking = subparser $
+     command "preprocess" (parseLinkingPreprocess `withInfo` "Preprocess data for linking.")
+  <> command "evaluate" (parseLinkingEvaluate `withInfo` "Apply algorithm on annotated dataset.")
+  <> command "evaluate-result" (parseLinkingEvaluateResult `withInfo` "Evaluate algorithm on generated dataset.")
+  <> command "apply" (parseLinkingApply `withInfo` "Apply algorithm on unannotated dataset.")
+  <> command "interactive" (parseLinkingInteractive `withInfo` "Apply algorithm interactively.")
 
-parseNomLinkingPreprocess :: Parser NomLinkingCommand
-parseNomLinkingPreprocess = NomLinkingPreprocess
+parseLinkingPreprocess :: Parser LinkingCommand
+parseLinkingPreprocess = LinkingPreprocess
     <$> argument str (metavar "CINETV_EXT_DIR")
     <*> argument auto (metavar "TOTAL_DATA_SIZE")
     <*> argument auto (metavar "VALIDATION_DATA_RATIO")
 
-parseNomLinkingEvaluate :: Parser NomLinkingCommand
-parseNomLinkingEvaluate = NomLinkingEvaluation
+parseLinkingEvaluate :: Parser LinkingCommand
+parseLinkingEvaluate = LinkingEvaluation
   <$> switch ( long "test"
             <> short 't'
             <> help "Final testing"
              )
 
-parseNomLinkingEvaluateResult :: Parser NomLinkingCommand
-parseNomLinkingEvaluateResult = NomLinkingEvaluationResults
+parseLinkingEvaluateResult :: Parser LinkingCommand
+parseLinkingEvaluateResult = LinkingEvaluationResults
   <$> switch ( long "test"
             <> short 't'
             <> help "Final testing"
              )
 
-parseNomLinkingApply :: Parser NomLinkingCommand
-parseNomLinkingApply = NomLinkingApply
+parseLinkingApply :: Parser LinkingCommand
+parseLinkingApply = LinkingApply
   <$> switch ( long "restart"
             <> short 'r'
             <> help "Algorithm application on ALL data (even if already annotated)"
              )
 
-parseNomLinkingInteractive :: Parser NomLinkingCommand
-parseNomLinkingInteractive = pure NomLinkingInteractive
-
-parseFilmoLinking :: Parser Command
-parseFilmoLinking = FilmoLinking
-  <$> switch ( long "restart"
-            <> short 'r'
-            <> help "Algorithm application on ALL data (even if already annotated)"
-             )
+parseLinkingInteractive :: Parser LinkingCommand
+parseLinkingInteractive = pure LinkingInteractive

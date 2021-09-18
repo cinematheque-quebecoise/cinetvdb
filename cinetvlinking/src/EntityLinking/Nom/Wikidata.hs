@@ -9,14 +9,13 @@ module EntityLinking.Nom.Wikidata
   )
 where
 
-import           Database.CineTV                          (MonadGetPersonName (..),
+import           Database.CQ                          (MonadGetPersonName (..),
                                                            MonadGetPersonRoles (..),
                                                            PersonName (..))
 import           Database.SPARQL.Protocol.Client.Extended (MonadSparqlQuery (..),
                                                            getIRI, selectQuery)
 import           EntityLinking.Fonction.Wikidata          (roleWdLinking)
 import           Import
-import           Types.Resource                           (ResourceUri (..))
 
 import           Control.Monad.Except
 import           Data.Either.Combinators                  (eitherToError,
@@ -27,19 +26,22 @@ import qualified Data.Map                                 as M
 import qualified Data.Set                                 as S
 import qualified Data.Text                                as T
 import           NeatInterpolation
+-- import EntityLinking.Types (LinkingException (EntityNotFoundCineTVException, EntityNotFoundWikidataException, MultiMatchException))
+import EntityLinking.Nom.Types (PersonId)
+import EntityLinking.Types (ResourceUri(..), LinkingException(LinkingException))
 
 data LinkedPerson = LinkedPerson
     { linkedPersonName :: PersonName
     , linkedPersonUri  :: ResourceUri
     }
 
-data LinkingException = PersonNotFoundCineTVException Int64
+data PersonLinkingException = PersonNotFoundCineTVException PersonId
     | PersonNotFoundWikidataException PersonName
     | NoSharedRoleException PersonName [ResourceUri] [ResourceUri]
     | MultiMatchException [ResourceUri]
     deriving (Typeable)
 
-instance Show LinkingException where
+instance Show PersonLinkingException where
   show (PersonNotFoundCineTVException nomId) = concat
     [ "La personne avec l'identificant "
     , show nomId
@@ -66,22 +68,22 @@ instance Show LinkingException where
     "Plusieurs liens possibiles existe dans Wikidata: "
       ++ L.intercalate ", " (show <$> uris)
 
-instance Exception LinkingException
+instance Exception PersonLinkingException
 
 linkNomId
   :: (MonadGetPersonRoles m, MonadGetPersonName m, MonadSparqlQuery m)
-  => Int64
-  -> m (Either LinkingException LinkedPerson)
+  => PersonId
+  -> m (Either LinkingException ResourceUri)
 linkNomId nomId = do
   personNameM    <- getPersonName nomId
   personRoleUris <- getPersonRoleUris nomId
 
   runExceptT $ do
     personName <- eitherToError
-      $ maybeToRight (PersonNotFoundCineTVException nomId) personNameM
+      $ maybeToRight (LinkingException $ PersonNotFoundCineTVException nomId) personNameM
     linkByPersonNameAndRoles personName personRoleUris
 
-getPersonRoleUris :: (MonadGetPersonRoles m) => Int64 -> m [ResourceUri]
+getPersonRoleUris :: (MonadGetPersonRoles m) => PersonId -> m [ResourceUri]
 getPersonRoleUris nomId = do
   personRoleIds <- getPersonRoles nomId
   return
@@ -96,13 +98,13 @@ linkByPersonNameAndRoles
   :: (MonadSparqlQuery m)
   => PersonName
   -> [ResourceUri]
-  -> ExceptT LinkingException m LinkedPerson
+  -> ExceptT LinkingException m ResourceUri
 linkByPersonNameAndRoles personName personRoleUris = do
   possiblePeople <- selectPeopleByNameAndRoles personName personRoleUris
   case possiblePeople of
-    []          -> throwError $ PersonNotFoundWikidataException personName
-    [personUri] -> return $ LinkedPerson personName personUri
-    people      -> throwError $ MultiMatchException people
+    []          -> throwError $ LinkingException $ PersonNotFoundWikidataException personName
+    [personUri] -> return personUri
+    people      -> throwError $ LinkingException $ MultiMatchException people
 
 selectPeopleByNameAndRoles
   :: (MonadSparqlQuery m)
@@ -134,8 +136,7 @@ selectPeopleByNameAndRoles personName personRoleUris = do
             S.toList $ S.difference personUris personUrisWithRole
 
       when (null personUrisWithRole && not (null personUrisNoRole))
-        $ throwError
-        $ NoSharedRoleException personName personUrisNoRole personRoleUris
+        $ throwError $ LinkingException $ NoSharedRoleException personName personUrisNoRole personRoleUris
 
       return $ S.toList personUrisWithRole
     Nothing -> return []

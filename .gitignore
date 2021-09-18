@@ -5,3 +5,5 @@ cinetv2sqlite
 .gitlab-token
 cabal.project.local*
 *.bak
+.direnv
+**/.vim
